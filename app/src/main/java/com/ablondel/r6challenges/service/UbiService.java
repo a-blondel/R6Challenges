@@ -8,8 +8,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class UbiService {
 
@@ -34,8 +34,6 @@ public class UbiService {
             urlConnection.connect();
             response = getResponse(urlConnection);
             Log.d("Debug---ConnResponse", response);
-        } catch (MalformedURLException e) {
-            response = EXCEPTION_PATTERN + e.getMessage();
         } catch (IOException e) {
             response = EXCEPTION_PATTERN + e.getMessage();
         } finally {
@@ -48,7 +46,7 @@ public class UbiService {
 
 
     private HttpURLConnection prepareRequest(String connectionUrl, String authorization, String method) throws IOException {
-        HttpURLConnection urlConnection = null;
+        HttpURLConnection urlConnection;
         URL url;
         url = new URL(connectionUrl);
         urlConnection = (HttpURLConnection) url.openConnection();
@@ -61,7 +59,7 @@ public class UbiService {
         urlConnection.setRequestProperty(HEADER_AUTHORIZATION, authorization);
         if(method.equals(POST_METHOD)){
             OutputStream os = urlConnection.getOutputStream();
-            OutputStreamWriter osw = new OutputStreamWriter(os, CHARSET_UTF8);
+            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
             osw.write(REMEMBER_BE);
             osw.flush();
             osw.close();
@@ -71,8 +69,8 @@ public class UbiService {
     }
 
     private String getResponse(HttpURLConnection urlConnection) throws IOException {
-        String response = null;
-        BufferedReader br = null;
+        StringBuilder response = new StringBuilder();
+        BufferedReader br;
         if (100 <= urlConnection.getResponseCode() && urlConnection.getResponseCode() <= 399) {
             br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
         } else {
@@ -80,9 +78,9 @@ public class UbiService {
         }
         String strCurrentLine;
         while ((strCurrentLine = br.readLine()) != null) {
-            response += strCurrentLine;
+            response.append(strCurrentLine);
         }
-        return response;
+        return response.toString();
     }
 
 }

@@ -1,7 +1,16 @@
 <resources>
     <string name="app_name">R6 Challenges</string>
+
+    <!--Main Activity-->
     <string name="synchronize">"Synchronize"</string>
     <string name="player_name">"Player Name"</string>
     <string name="logout">"Logout"</string>
     <string name="playerWithPlatform">"Player (platform)"</string>
+
+    <!--Login Activity-->
+    <string name="title_activity_login">Login</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="successful_connection">Connected</string>
 </resources>
