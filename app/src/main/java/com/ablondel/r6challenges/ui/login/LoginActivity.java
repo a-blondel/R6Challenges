@@ -31,10 +31,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import com.ablondel.r6challenges.R;
+import com.ablondel.r6challenges.model.UserInfos;
+import com.ablondel.r6challenges.service.ParseResponseService;
+import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
+import com.google.gson.Gson;
 
 
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
 
 /**
  * A login screen that offers login via email/password.
@@ -46,7 +54,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private UserLoginTask mAuthTask = null;
     private UbiService ubiService;
-    //private ConnectionViewModel connectionViewModel;
     //private ServiceHelper serviceHelper;
 
     // UI references.
@@ -80,8 +87,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         ubiService = new UbiService();
         //serviceHelper = new ServiceHelper();
-
-        //connectionViewModel = ViewModelProviders.of(this).get(ConnectionViewModel.class);
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -211,26 +216,24 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // attempt authentication against a network service.
             String key = mEmail + ":" + mPassword;
-
             boolean isOk = false;
-            String message = "OK !";
-
+            String message = "Connected!";
             byte[] keyBytes;
             try {
                 keyBytes = key.getBytes(CHARSET_UTF8);
-
                 String encodedKey = Base64.encodeToString(keyBytes, Base64.NO_WRAP);
+                String authenticationJson = ubiService.authenticate(encodedKey);
+                //String profilesJson = ubiService.getProfiles(encodedKey);
+                String profilesJson = "WIP";
 
-                String response = ubiService.authenticate(encodedKey);
-
-                if (response != null && !response.equals("") && !response.contains(EXCEPTION_PATTERN)) {
-                    //connectionViewModel.insert(serviceHelper.generateConnectionEntity(response, encodedKey));
+                if (StringUtils.isNotBlank(authenticationJson) && StringUtils.isNotBlank(profilesJson)) {
+                    UserInfos userInfos = ParseResponseService.getUserInfos(authenticationJson, profilesJson);
+                    SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
                     isOk = true;
                 } else {
-                    //message = serviceHelper.getErrorMessage(response);
-                    message = "Failure";
+                    //message = serviceHelper.getErrorMessage(authentication);
+                    message = "Could not contact Ubisoft services!";
                 }
             } catch (UnsupportedEncodingException e) {
                 message = e.getMessage();
@@ -238,8 +241,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 //message = e.getMessage();
                 //} catch (ParseException e) {
                 //message = e.getMessage();
+            } catch (GeneralSecurityException | IOException e) {
+                message = e.getMessage();
             }
-            //sendMessage(message);
+            sendMessage(message);
             Log.d("Result :" , message);
 
             if (isOk) {
