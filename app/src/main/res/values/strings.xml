@@ -12,4 +12,5 @@
     <string name="synchronize">"Synchronize"</string>
     <string name="player_name">"Player Name"</string>
     <string name="logout">"Logout"</string>
+    <string name="playerWithPlatform">"Player (platform)"</string>
 </resources>
