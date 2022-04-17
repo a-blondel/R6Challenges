@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.ImageButton;
 
 import com.ablondel.r6challenges.R;
-import com.ablondel.r6challenges.ui.login.LoginActivity;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -21,8 +20,8 @@ public class MainActivity extends AppCompatActivity {
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent);
+                //Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                //startActivity(intent);
             }
         });
     }
