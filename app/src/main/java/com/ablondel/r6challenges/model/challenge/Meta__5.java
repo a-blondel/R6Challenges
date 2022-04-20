@@ -1,0 +1,19 @@
+
+package com.ablondel.r6challenges.model.challenge;
+
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
+public class Meta__5 {
+
+    @SerializedName("id")
+    @Expose
+    public String id;
+    @SerializedName("collectedCount")
+    @Expose
+    public Integer collectedCount;
+    @SerializedName("__typename")
+    @Expose
+    public String typename;
+
+}

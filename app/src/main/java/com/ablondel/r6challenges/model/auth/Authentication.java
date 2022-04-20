@@ -1,7 +1,5 @@
 package com.ablondel.r6challenges.model.auth;
 
-import java.time.LocalDate;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
