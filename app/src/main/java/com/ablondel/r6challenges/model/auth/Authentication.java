@@ -1,4 +1,4 @@
-package com.ablondel.r6challenges.model;
+package com.ablondel.r6challenges.model.auth;
 
 import java.time.LocalDate;
 

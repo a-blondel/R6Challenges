@@ -32,6 +32,8 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
+import com.ablondel.r6challenges.model.auth.Authentication;
+import com.ablondel.r6challenges.model.profile.ProfileList;
 import com.ablondel.r6challenges.service.ParseResponseService;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
@@ -221,16 +223,20 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             String message = "Connected!";
             byte[] keyBytes;
             try {
+                UserInfos userInfos = new UserInfos();
                 keyBytes = key.getBytes(CHARSET_UTF8);
                 String encodedKey = Base64.encodeToString(keyBytes, Base64.NO_WRAP);
                 String authenticationJson = ubiService.authenticate(encodedKey);
-                //String profilesJson = ubiService.getProfiles(encodedKey);
-                String profilesJson = "WIP";
-
-                if (StringUtils.isNotBlank(authenticationJson) && StringUtils.isNotBlank(profilesJson)) {
-                    UserInfos userInfos = ParseResponseService.getUserInfos(authenticationJson, profilesJson);
-                    SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
-                    isOk = true;
+                Log.d("Debug---authenticationJson", authenticationJson);
+                if(StringUtils.isNotBlank(authenticationJson)) {
+                    userInfos.setAuthentication(new Gson().fromJson(authenticationJson, Authentication.class));
+                    String profilesJson = ubiService.getProfiles(userInfos);
+                    Log.d("Debug---profilesResponse", profilesJson);
+                    if(StringUtils.isNotBlank(profilesJson)) {
+                        userInfos.setProfileList(new Gson().fromJson(profilesJson, ProfileList.class));
+                        SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
+                        isOk = true;
+                    }
                 } else {
                     //message = serviceHelper.getErrorMessage(authentication);
                     message = "Could not contact Ubisoft services!";

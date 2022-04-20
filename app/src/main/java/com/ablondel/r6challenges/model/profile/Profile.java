@@ -1,4 +1,4 @@
-package com.ablondel.r6challenges.model;
+package com.ablondel.r6challenges.model.profile;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
