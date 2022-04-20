@@ -1,7 +1,6 @@
 package com.ablondel.r6challenges.ui.login;
 
 import static com.ablondel.r6challenges.service.UbiService.CHARSET_UTF8;
-import static com.ablondel.r6challenges.service.UbiService.EXCEPTION_PATTERN;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -34,13 +33,10 @@ import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.auth.Authentication;
 import com.ablondel.r6challenges.model.profile.ProfileList;
-import com.ablondel.r6challenges.service.ParseResponseService;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.google.gson.Gson;
 
-
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -56,7 +52,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private UserLoginTask mAuthTask = null;
     private UbiService ubiService;
-    //private ServiceHelper serviceHelper;
 
     // UI references.
     private EditText mEmailView;
@@ -88,7 +83,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         });
 
         ubiService = new UbiService();
-        //serviceHelper = new ServiceHelper();
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
@@ -228,25 +222,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 String encodedKey = Base64.encodeToString(keyBytes, Base64.NO_WRAP);
                 String authenticationJson = ubiService.authenticate(encodedKey);
                 Log.d("Debug---authenticationJson", authenticationJson);
-                if(StringUtils.isNotBlank(authenticationJson)) {
+                if(ubiService.isValidResponse(authenticationJson)) {
                     userInfos.setAuthentication(new Gson().fromJson(authenticationJson, Authentication.class));
                     String profilesJson = ubiService.getProfiles(userInfos);
                     Log.d("Debug---profilesResponse", profilesJson);
-                    if(StringUtils.isNotBlank(profilesJson)) {
+                    if(ubiService.isValidResponse(profilesJson)) {
                         userInfos.setProfileList(new Gson().fromJson(profilesJson, ProfileList.class));
                         SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
                         isOk = true;
+                    } else {
+                        message = ubiService.getErrorMessage(profilesJson);
                     }
                 } else {
-                    //message = serviceHelper.getErrorMessage(authentication);
-                    message = "Could not contact Ubisoft services!";
+                    message = ubiService.getErrorMessage(authenticationJson);
                 }
             } catch (UnsupportedEncodingException e) {
                 message = e.getMessage();
-                //} catch (JSONException e) {
-                //message = e.getMessage();
-                //} catch (ParseException e) {
-                //message = e.getMessage();
             } catch (GeneralSecurityException | IOException e) {
                 message = e.getMessage();
             }

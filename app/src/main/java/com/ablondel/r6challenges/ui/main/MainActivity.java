@@ -19,7 +19,6 @@ import android.widget.Toast;
 
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
-import com.ablondel.r6challenges.service.ParseResponseService;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.ui.login.LoginActivity;
 import com.google.gson.Gson;

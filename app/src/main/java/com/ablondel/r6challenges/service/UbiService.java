@@ -6,6 +6,8 @@ import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.auth.Authentication;
 import com.google.gson.Gson;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -50,6 +52,16 @@ public class UbiService {
     // Others
     private static final String UBI_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private static final String UBI_DATE_DELIMITER = "\\.";
+
+    // Game ID
+    public static final String R6_PS4_SPACEID = "05bfb3f7-6c21-4c42-be1f-97a33fb5cf66";
+    public static final String R6_PC_SPACEID = "5172a557-50b5-4665-b7db-e3f2e8c5041d";
+
+    // Error handling
+    private static final String UBI_ERROR_CODE = "errorCode";
+    private static final String UBI_ERROR_BEGIN = "\"message\":\"";
+    private static final String UBI_ERROR_END = "\",";
+    private static final String UBI_EMPTY_RESPONSE = "Empty response";
 
 
     public String authenticate(String encodedKey) {
@@ -138,6 +150,27 @@ public class UbiService {
             response.append(strCurrentLine);
         }
         return response.toString();
+    }
+
+    public boolean isValidResponse(String response){
+        return StringUtils.isNotBlank(response) && !response.contains(UBI_ERROR_CODE) &&!response.contains(EXCEPTION_PATTERN);
+    }
+
+    public String getErrorMessage(String response){
+        String message;
+        if (response.contains(UBI_ERROR_CODE)) {
+            String errorMessageBegin = UBI_ERROR_BEGIN;
+            String errorMessageEnd = UBI_ERROR_END;
+            int pFrom = response.indexOf(errorMessageBegin) + errorMessageBegin.length();
+            int pTo = response.indexOf(errorMessageEnd, pFrom);
+
+            message = response.substring(pFrom, pTo);
+        } else if(response.contains(EXCEPTION_PATTERN)) {
+            message = response;
+        } else {
+            message = UBI_EMPTY_RESPONSE;
+        }
+        return message;
     }
 
 }
