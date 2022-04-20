@@ -25,8 +25,6 @@ import com.ablondel.r6challenges.service.UbiService;
 import com.ablondel.r6challenges.ui.login.LoginActivity;
 import com.google.gson.Gson;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
@@ -52,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             userInfos = new Gson().fromJson(SharedPreferencesService.getEncryptedSharedPreferences().getString("userInfos", null), UserInfos.class);
 
-            if(null == userInfos) {
+            if (null == userInfos) {
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
             }
@@ -100,27 +98,16 @@ public class MainActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... params) {
             boolean isOk = false;
             String message = "Challenges updated!";
-            //try {
-                String challengesJson = ubiService.getChallenges(userInfos, R6_PS4_SPACEID);
+            String challengesJson = ubiService.getChallenges(userInfos, R6_PS4_SPACEID);
 
-            if (StringUtils.isNotBlank(challengesJson)) {
+            if (ubiService.isValidResponse(challengesJson)) {
                 Challenges data = new Gson().fromJson(challengesJson, Challenges.class);
-                    isOk = true;
-                } else {
-                    //message = serviceHelper.getErrorMessage(authentication);
-                    message = "Could not contact Ubisoft services!";
-                }
-            //} catch (UnsupportedEncodingException e) {
-                //message = e.getMessage();
-                //} catch (JSONException e) {
-                //message = e.getMessage();
-                //} catch (ParseException e) {
-                //message = e.getMessage();
-            //} catch (GeneralSecurityException | IOException e) {
-                //message = e.getMessage();
-            //}
+                isOk = true;
+            } else {
+                message = ubiService.getErrorMessage(challengesJson);
+            }
             sendMessage(message);
-            Log.d("Result :" , message);
+            Log.d("Result :", message);
 
             if (isOk) {
                 return true;
@@ -141,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
             showProgress(false);
         }
 
-        private void sendMessage(String message){
+        private void sendMessage(String message) {
             Message msg = Message.obtain();
             msg.obj = message;
             msg.setTarget(handler);
