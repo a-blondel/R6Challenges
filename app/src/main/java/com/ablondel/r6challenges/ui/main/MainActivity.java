@@ -1,6 +1,8 @@
 package com.ablondel.r6challenges.ui.main;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -17,6 +19,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.ablondel.r6challenges.App;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.challenge.Challenges;
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private View progressView;
     private View mainContentView;
     private Handler handler;
+    ChallengesRecyclerViewAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,32 +96,32 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Represents an asynchronous task used to update the challenges
      */
-    public class RefreshChallengesTask extends AsyncTask<Void, Void, Boolean> {
+    public class RefreshChallengesTask extends AsyncTask<Void, Void, Challenges> {
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            boolean isOk = false;
+        protected Challenges doInBackground(Void... params) {
+            Challenges data = null;
             String message = "Challenges updated!";
             String challengesJson = ubiService.getChallenges(userInfos, R6_PS4_SPACEID);
-
+            Log.d("Debug---challengesJson", challengesJson);
             if (ubiService.isValidResponse(challengesJson)) {
-                Challenges data = new Gson().fromJson(challengesJson, Challenges.class);
-                isOk = true;
+                data = new Gson().fromJson(challengesJson, Challenges.class);
             } else {
                 message = ubiService.getErrorMessage(challengesJson);
             }
             sendMessage(message);
             Log.d("Result :", message);
 
-            if (isOk) {
-                return true;
-            } else {
-                return false;
-            }
+            return data;
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final Challenges data) {
+            RecyclerView recyclerView = findViewById(R.id.mainContentRecyclerView);
+            recyclerView.setLayoutManager(new LinearLayoutManager(App.getAppContext()));
+            adapter = new ChallengesRecyclerViewAdapter(App.getAppContext(), data.getData().getGame().getViewer().getMeta().getPeriodicChallenges().getChallenges());
+            recyclerView.setAdapter(adapter);
+
             refreshChallengesTask = null;
             showProgress(false);
         }

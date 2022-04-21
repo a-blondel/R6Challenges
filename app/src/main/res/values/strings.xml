@@ -6,6 +6,7 @@
     <string name="player_name">"Player Name"</string>
     <string name="logout">"Logout"</string>
     <string name="playerWithPlatform">"Player (platform)"</string>
+    <string name="claim">Claim</string>
 
     <!--Login Activity-->
     <string name="title_activity_login">Login</string>

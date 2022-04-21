@@ -6,6 +6,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
+@lombok.Data
 public class Thresholds {
 
     @SerializedName("totalCount")
