@@ -19,7 +19,12 @@ import com.ablondel.r6challenges.model.challenge.Node__2;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
+import lombok.SneakyThrows;
 
 public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<ChallengesRecyclerViewAdapter.ViewHolder> {
     private LayoutInflater mInflater;
@@ -36,6 +41,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         return new ViewHolder(view);
     }
 
+    @SneakyThrows
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Challenge__1 challenge__1 = mData.get(position);
@@ -43,6 +49,27 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         Meta__3 viewerMeta = challenge__1.getViewer().getMeta();
 
         holder.challengeNameTextView.setText(challenge__1.getName());
+
+        if(!challenge__1.isExpired && null != challenge__1.getEndDate()) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
+            long endDate = formatter.parse(challenge__1.getEndDate().toString()).getTime();
+            long now = new Date().getTime() - (1000 * 60 * 60 * 24 * 14);
+            long diff = endDate - now;
+            if (diff > 0l) {
+                long diffDay = diff / (24 * 60 * 60 * 1000);
+                diff = diff - (diffDay * 24 * 60 * 60 * 1000);
+                long diffHours = diff / (60 * 60 * 1000);
+                diff = diff - (diffHours * 60 * 60 * 1000);
+                long diffMinutes = diff / (60 * 1000);
+
+                holder.challengeTimeTextView.setText(new StringBuilder()
+                        .append(String.format("%01d", diffDay) + "d").append(" ")
+                        .append(String.format("%02d", diffHours) + "h").append(" ")
+                        .append(String.format("%02d", diffMinutes) + "min").append(" ")
+                );
+            }
+        }
+
         holder.challengeDescriptionTextView.setText(
                 StringUtils.replace(
                         challenge__1.getDescription(),
@@ -54,7 +81,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
                 .append("/")
                 .append(thresholdsNode.getValue())
         );
-        holder.challengeProgressionProgressBar.setProgress((int) (100 * (float)viewerMeta.getProgress()/thresholdsNode.getValue()));
+        holder.challengeProgressionProgressBar.setProgress(viewerMeta.getProgressPercentage().intValue());
         holder.challengeProgressionProgressBar.setMax(100);
 
         CurrencyPrizes__1 prizes__1 = challenge__1.getThresholds().getNodes().get(0).getCurrencyPrizes();
@@ -78,6 +105,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
     public class ViewHolder extends RecyclerView.ViewHolder {
         TextView challengeNameTextView;
+        TextView challengeTimeTextView;
         TextView challengeDescriptionTextView;
         TextView challengeProgressionTextView;
         ProgressBar challengeProgressionProgressBar;
@@ -88,6 +116,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         ViewHolder(View itemView) {
             super(itemView);
             challengeNameTextView = itemView.findViewById(R.id.challengeNameTextView);
+            challengeTimeTextView = itemView.findViewById(R.id.challengeTimeTextView);
             challengeDescriptionTextView = itemView.findViewById(R.id.challengeDescriptionTextView);
             challengeProgressionTextView = itemView.findViewById(R.id.challengeProgressionTextView);
             challengeProgressionProgressBar = itemView.findViewById(R.id.challengeProgressionProgressBar);
