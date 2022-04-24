@@ -29,6 +29,7 @@ import java.util.Locale;
 import lombok.SneakyThrows;
 
 public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<ChallengesRecyclerViewAdapter.ViewHolder> {
+    public static final String COMMUNITY = "COMMUNITY";
     private LayoutInflater mInflater;
     private List<Challenge__1> mData;
 
@@ -77,6 +78,11 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
                         challenge__1.getDescription(),
                         "{threshold}",
                         thresholdsNode.getFormattedCumulatedValue()));
+
+        if(COMMUNITY.equals(challenge__1.getType())) {
+            holder.challengeContributionTextView.setVisibility(View.VISIBLE);
+            holder.challengeContributionTextView.setText("Contribution: " + challenge__1.getViewer().getMeta().getFormattedContribution());
+        }
 
         holder.challengeProgressionTextView.setText(new StringBuilder()
                 .append(viewerMeta.getProgress())
@@ -127,6 +133,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         TextView challengeNameTextView;
         TextView challengeTimeTextView;
         TextView challengeDescriptionTextView;
+        TextView challengeContributionTextView;
         TextView challengeProgressionTextView;
         ProgressBar challengeProgressionProgressBar;
         TextView challengeRewardsTextView;
@@ -138,6 +145,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             challengeNameTextView = itemView.findViewById(R.id.challengeNameTextView);
             challengeTimeTextView = itemView.findViewById(R.id.challengeTimeTextView);
             challengeDescriptionTextView = itemView.findViewById(R.id.challengeDescriptionTextView);
+            challengeContributionTextView = itemView.findViewById(R.id.challengeContributionTextView);
             challengeProgressionTextView = itemView.findViewById(R.id.challengeProgressionTextView);
             challengeProgressionProgressBar = itemView.findViewById(R.id.challengeProgressionProgressBar);
             challengeRewardsTextView = itemView.findViewById(R.id.challengeRewardsTextView);

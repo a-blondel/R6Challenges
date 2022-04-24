@@ -57,6 +57,7 @@ public class UbiService {
     // Game ID
     public static final String R6_PS4_SPACEID = "05bfb3f7-6c21-4c42-be1f-97a33fb5cf66";
     public static final String R6_PC_SPACEID = "5172a557-50b5-4665-b7db-e3f2e8c5041d";
+    public static final String R6_XONE_SPACEID = "98a601e5-ca91-4440-b1c5-753f601a2c90";
 
     // Error handling
     private static final String UBI_ERROR_CODE = "errorCode";

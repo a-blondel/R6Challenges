@@ -48,11 +48,20 @@
         android:id="@+id/challengeProgressionRow">
 
         <TextView
-            android:id="@+id/challengeProgressionTextView"
-            android:layout_width="match_parent"
+            android:id="@+id/challengeContributionTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="right"
-            android:textAlignment="gravity" />
+            android:visibility="gone"/>
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/challengeProgressionTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 
