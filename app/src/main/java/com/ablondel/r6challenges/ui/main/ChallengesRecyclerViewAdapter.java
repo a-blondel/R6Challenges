@@ -14,8 +14,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.challenge.Challenge__1;
 import com.ablondel.r6challenges.model.challenge.CurrencyPrizes__1;
+import com.ablondel.r6challenges.model.challenge.ItemPrizes__1;
 import com.ablondel.r6challenges.model.challenge.Meta__3;
 import com.ablondel.r6challenges.model.challenge.Node__2;
+import com.ablondel.r6challenges.model.challenge.Node__4;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -85,15 +87,29 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         holder.challengeProgressionProgressBar.setMax(100);
 
         CurrencyPrizes__1 prizes__1 = challenge__1.getThresholds().getNodes().get(0).getCurrencyPrizes();
+        ItemPrizes__1 itemPrizes__1 = challenge__1.getThresholds().getNodes().get(0).getItemPrizes();
         if(0 != prizes__1.getEdges().size()) {
             String rewardType = prizes__1.getEdges().get(0).getNode().getName();
             Integer rewardValue = prizes__1.getEdges().get(0).getMeta().getValue();
-            holder.challengeRewards1TextView.setText(new StringBuilder()
-                    .append(rewardValue).append(" ").append(rewardType));
-            holder.challengeRewards2TextView.setText(new StringBuilder()
+            holder.challengeRewardsTextView.setText(new StringBuilder()
+                    .append(rewardValue).append(" ").append(rewardType)
+                    .append(" - ")
                     .append(challenge__1.getXpPrize()).append(" ").append("XP"));
-        } else {
+        } else if (itemPrizes__1.getNodes().size() > 0) {
+            int i = 0;
+            StringBuilder prizesBuilder = new StringBuilder();
+            for(Node__4 node__4 : itemPrizes__1.getNodes()) {
+                if(i != 0) {
+                    prizesBuilder.append(" - ");
+                }
+                prizesBuilder.append(node__4.getName());
+                i++;
+            }
+            holder.challengeRewardsTextView.setText(prizesBuilder.toString());
+        }
 
+        if(challenge__1.getViewer().getMeta().getIsCompleted() && challenge__1.getViewer().getMeta().isRedeemed) {
+            holder.challengeRewardsObtainedTextView.setVisibility(View.VISIBLE);
         }
 
         if(challenge__1.getViewer().getMeta().getIsCollectible() && !challenge__1.getViewer().getMeta().isRedeemed) {
@@ -113,8 +129,8 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         TextView challengeDescriptionTextView;
         TextView challengeProgressionTextView;
         ProgressBar challengeProgressionProgressBar;
-        TextView challengeRewards1TextView;
-        TextView challengeRewards2TextView;
+        TextView challengeRewardsTextView;
+        TextView challengeRewardsObtainedTextView;
         Button challengeClaimButton;
 
         ViewHolder(View itemView) {
@@ -124,8 +140,8 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             challengeDescriptionTextView = itemView.findViewById(R.id.challengeDescriptionTextView);
             challengeProgressionTextView = itemView.findViewById(R.id.challengeProgressionTextView);
             challengeProgressionProgressBar = itemView.findViewById(R.id.challengeProgressionProgressBar);
-            challengeRewards1TextView = itemView.findViewById(R.id.challengeRewards1TextView);
-            challengeRewards2TextView = itemView.findViewById(R.id.challengeRewards2TextView);
+            challengeRewardsTextView = itemView.findViewById(R.id.challengeRewardsTextView);
+            challengeRewardsObtainedTextView = itemView.findViewById(R.id.challengeRewardsObtainedTextView);
             challengeClaimButton = itemView.findViewById(R.id.challengeClaimButton);
         }
     }

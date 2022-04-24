@@ -76,15 +76,19 @@
         android:id="@+id/challengeRewardsRow">
 
         <TextView
-            android:id="@+id/challengeRewards1TextView"
+            android:id="@+id/challengeRewardsTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginRight="5dp"/>
 
         <TextView
-            android:id="@+id/challengeRewards2TextView"
+            android:id="@+id/challengeRewardsObtainedTextView"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="@string/obtained"
+            android:textStyle="bold"
+            android:textColor="#50C878"
+            android:visibility="gone" />
 
     </LinearLayout>
 
