@@ -96,6 +96,10 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
         }
 
+        if(challenge__1.getViewer().getMeta().getIsCollectible() && !challenge__1.getViewer().getMeta().isRedeemed) {
+            holder.challengeClaimButton.setVisibility(View.VISIBLE);
+        }
+
     }
 
     @Override
