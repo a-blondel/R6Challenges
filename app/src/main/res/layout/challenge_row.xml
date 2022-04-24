@@ -17,6 +17,8 @@
             android:id="@+id/challengeNameTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textColor="#D4AF37"
+            android:textStyle="bold"
             android:layout_weight="1"/>
 
         <TextView
@@ -34,7 +36,8 @@
         <TextView
             android:id="@+id/challengeDescriptionTextView"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textStyle="italic"/>
 
     </LinearLayout>
 
@@ -94,6 +97,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/challengeClaimButton"
+            android:layout_marginTop="5dp"
             android:background="@drawable/round_shape_btn"
             android:visibility="gone"
             android:text="@string/claim"/>

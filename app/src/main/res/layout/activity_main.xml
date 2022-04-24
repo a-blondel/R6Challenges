@@ -27,9 +27,11 @@
 
             <ImageButton
                 android:id="@+id/logoutButton"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:contentDescription="@string/logout"
+                android:layout_margin="5dp"
+                android:background="#FF3131"
                 android:src="@android:drawable/ic_lock_power_off" />
 
             <Spinner
@@ -44,9 +46,11 @@
 
             <ImageButton
                 android:id="@+id/refreshButton"
-                android:layout_width="52dp"
-                android:layout_height="52dp"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
                 android:contentDescription="@string/synchronize"
+                android:layout_margin="5dp"
+                android:background="#1F51FF"
                 android:src="@android:drawable/ic_popup_sync" />
 
         </LinearLayout>
