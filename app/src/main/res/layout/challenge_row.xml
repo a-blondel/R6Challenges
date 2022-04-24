@@ -94,6 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/challengeClaimButton"
+            android:background="@drawable/round_shape_btn"
             android:visibility="gone"
             android:text="@string/claim"/>
 
