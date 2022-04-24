@@ -27,7 +27,7 @@ public class UbiService {
     // Urls
     private static final String AUTH_URL = "https://public-ubiservices.ubi.com/v3/profiles/sessions";
     private static final String PROFILES_URL = "https://public-ubiservices.ubi.com/v2/profiles?userId=";
-    private static final String CHALLENGES_URL = "https://public-ubiservices.ubi.com/v1/profiles/me/uplay/graphql";
+    private static final String GRAPHQL_URL = "https://public-ubiservices.ubi.com/v1/profiles/me/uplay/graphql";
 
     // Methods
     private static final String POST_METHOD = "POST";
@@ -51,13 +51,18 @@ public class UbiService {
     public static final String EXCEPTION_PATTERN = "EXCEPTION: ";
 
     // Others
-    private static final String UBI_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
-    private static final String UBI_DATE_DELIMITER = "\\.";
+    public static final String UBI_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    public static final String UBI_DATE_DELIMITER = "\\.";
 
     // Game ID
     public static final String R6_PS4_SPACEID = "05bfb3f7-6c21-4c42-be1f-97a33fb5cf66";
     public static final String R6_PC_SPACEID = "5172a557-50b5-4665-b7db-e3f2e8c5041d";
     public static final String R6_XONE_SPACEID = "98a601e5-ca91-4440-b1c5-753f601a2c90";
+
+    // Platforms
+    public static final String PS4 = "PS4";
+    public static final String XONE = "XONE";
+    public static final String PC = "PC";
 
     // Error handling
     private static final String UBI_ERROR_CODE = "errorCode";
@@ -75,10 +80,17 @@ public class UbiService {
                 POST_METHOD, "{rememberMe: true}", null);
     }
 
+    public String getGame(UserInfos userInfos, String platform) {
+        checkExpiration(userInfos);
+        String body = "{\"operationName\":\"gameFromSlug\",\"variables\":{\"slug\":\"rainbow-six-siege\",\"platform\":\"" + platform + "\"},\"query\":\"query gameFromSlug($slug: String!, $platform: PlatformType) {\\n  viewer {\\n    id\\n    game(slug: $slug, platform: $platform) {\\n      node {\\n        ...gameProps\\n        slug\\n        description\\n        facebookUrl\\n        instagramUrl\\n        redditUrl\\n        twitterUrl\\n        websiteUrl\\n        challengesEnabled: isPeriodicChallengeSupported\\n        isPeriodicChallengeSupported\\n        classicChallenges {\\n          totalCount\\n          __typename\\n        }\\n        statsEnabled: isStatisticsSupported\\n        rewards {\\n          totalCount\\n          __typename\\n        }\\n        availablePlatforms {\\n          nodes {\\n            id\\n            name\\n            type\\n            __typename\\n          }\\n          __typename\\n        }\\n        availablePlatformGroups {\\n          id\\n          name\\n          type\\n          __typename\\n        }\\n        viewer {\\n          meta {\\n            id\\n            isOwned\\n            hasFirstPartyAccount: isLinkedToFirstPartyAccount\\n            lastPlayedDate\\n            ...friendsPlayingGames\\n            ownedPlatformGroups {\\n              id\\n              name\\n              type\\n              __typename\\n            }\\n            ownedCrossplayPlatforms {\\n              nodes {\\n                id\\n                type\\n                name\\n                __typename\\n              }\\n              __typename\\n            }\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment gameProps on Game {\\n  id\\n  spaceId\\n  name\\n  slug\\n  coverUrl: lowBoxArtUrl\\n  bannerUrl: backgroundUrl\\n  releaseDate\\n  releaseStatus\\n  platform {\\n    ...platformProps\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment platformProps on Platform {\\n  id\\n  name\\n  type\\n  __typename\\n}\\n\\nfragment friendsPlayingGames on UserGameMeta {\\n  friends {\\n    edges {\\n      node {\\n        id\\n        name\\n        avatarUrl\\n        networks {\\n          edges {\\n            node {\\n              id\\n              publicCodeName\\n              __typename\\n            }\\n            meta {\\n              id\\n              name\\n              __typename\\n            }\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      meta {\\n        id\\n        lastPlayedDate\\n        ownedCrossplayPlatforms {\\n          nodes {\\n            id\\n            name\\n            type\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\"}\n";
+        return callWebService(GRAPHQL_URL, UBI_TOKEN_PREFIX + userInfos.getAuthentication().getTicket(),
+                POST_METHOD, body, userInfos.getAuthentication().getSessionId());
+    }
+
     public String getChallenges(UserInfos userInfos, String spaceId) {
         checkExpiration(userInfos);
         String body = "{\"operationName\":\"getWeeklyChallenges\",\"variables\":{\"spaceId\":\"" + spaceId + "\"},\"query\":\"query getWeeklyChallenges($spaceId: String!) {\\n  game(spaceId: $spaceId) {\\n    id\\n    viewer {\\n      meta {\\n        id\\n        periodicChallenges {\\n          totalXpCount\\n          xpEarnedCount\\n          totalCount\\n          challenges: nodes {\\n            ...WeeklyChallengeData\\n            __typename\\n          }\\n          __typename\\n        }\\n        activatedChallengesXp: periodicChallenges(filterBy: {periodicChallenge: {isExpired: false}}) {\\n          totalXpCount\\n          xpEarnedCount\\n          __typename\\n        }\\n        currencyPrizes: periodicChallengePrizes(filterBy: {periodicChallengePrize: {type: CURRENCY}}) {\\n          ...gamePeriodicChallengePrizesConnection\\n          __typename\\n        }\\n        itemPrizes: periodicChallengePrizes(filterBy: {periodicChallengePrize: {type: ITEM}}) {\\n          ...gamePeriodicChallengePrizesConnection\\n          __typename\\n        }\\n        rewardPrizes: periodicChallengePrizes(filterBy: {periodicChallengePrize: {type: REWARD}}) {\\n          ...gamePeriodicChallengePrizesConnection\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n}\\n\\nfragment WeeklyChallengeData on PeriodicChallenge {\\n  id\\n  challengeId\\n  description\\n  imageUrl\\n  name\\n  previewUrl\\n  startDate\\n  endDate\\n  isExpired\\n  type\\n  xpPrize\\n  value\\n  formattedValue\\n  currencyPrizes: prizes(filterBy: {type: CURRENCY}) {\\n    nodes {\\n      id\\n      imageUrl\\n      name\\n      __typename\\n    }\\n    __typename\\n  }\\n  itemPrizes: prizes(filterBy: {type: ITEM}) {\\n    nodes {\\n      id\\n      imageUrl\\n      name\\n      __typename\\n    }\\n    __typename\\n  }\\n  rewardPrizes: prizes(filterBy: {type: REWARD}) {\\n    nodes {\\n      id\\n      imageUrl\\n      name\\n      __typename\\n    }\\n    __typename\\n  }\\n  thresholds {\\n    totalCount\\n    nodes {\\n      id\\n      value\\n      cumulatedValue\\n      formattedCumulatedValue\\n      xpPrize\\n      viewer {\\n        meta {\\n          id\\n          isCollected\\n          __typename\\n        }\\n        __typename\\n      }\\n      currencyPrizes: prizes(filterBy: {type: CURRENCY}) {\\n        edges {\\n          meta {\\n            id\\n            value: count\\n            __typename\\n          }\\n          node {\\n            id\\n            imageUrl\\n            name\\n            __typename\\n          }\\n          __typename\\n        }\\n        __typename\\n      }\\n      itemPrizes: prizes(filterBy: {type: ITEM}) {\\n        nodes {\\n          id\\n          imageUrl\\n          name\\n          __typename\\n        }\\n        __typename\\n      }\\n      rewardPrizes: prizes(filterBy: {type: REWARD}) {\\n        nodes {\\n          id\\n          imageUrl\\n          name\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n  viewer {\\n    meta {\\n      id\\n      isActivated\\n      isCollectible\\n      isCompleted\\n      isInProgress\\n      isRedeemed\\n      contribution\\n      formattedContribution\\n      progressPercentage\\n      progress\\n      formattedProgress\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\\nfragment gamePeriodicChallengePrizesConnection on UserGamePeriodicChallengePrizesConnection {\\n  totalCount\\n  collectedValuesCount\\n  totalValuesCount\\n  edges {\\n    meta {\\n      id\\n      count\\n      collectedCount\\n      __typename\\n    }\\n    node {\\n      id\\n      imageUrl\\n      name\\n      type\\n      viewer {\\n        meta {\\n          id\\n          collectedCount\\n          __typename\\n        }\\n        __typename\\n      }\\n      __typename\\n    }\\n    __typename\\n  }\\n  __typename\\n}\\n\"}\n";
-        return callWebService(CHALLENGES_URL, UBI_TOKEN_PREFIX + userInfos.getAuthentication().getTicket(),
+        return callWebService(GRAPHQL_URL, UBI_TOKEN_PREFIX + userInfos.getAuthentication().getTicket(),
                 POST_METHOD, body, userInfos.getAuthentication().getSessionId());
     }
 

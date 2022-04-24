@@ -1,6 +1,11 @@
 package com.ablondel.r6challenges.ui.login;
 
 import static com.ablondel.r6challenges.service.UbiService.CHARSET_UTF8;
+import static com.ablondel.r6challenges.service.UbiService.PC;
+import static com.ablondel.r6challenges.service.UbiService.PS4;
+import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_DELIMITER;
+import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_FORMAT;
+import static com.ablondel.r6challenges.service.UbiService.XONE;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -36,11 +41,20 @@ import com.ablondel.r6challenges.model.profile.ProfileList;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * A login screen that offers login via email/password.
@@ -225,11 +239,64 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 if(ubiService.isValidResponse(authenticationJson)) {
                     userInfos.setAuthentication(new Gson().fromJson(authenticationJson, Authentication.class));
                     String profilesJson = ubiService.getProfiles(userInfos);
-                    Log.d("Debug---profilesResponse", profilesJson);
+                    Log.d("Debug---profilesJson", profilesJson);
                     if(ubiService.isValidResponse(profilesJson)) {
                         userInfos.setProfileList(new Gson().fromJson(profilesJson, ProfileList.class));
-                        SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
-                        isOk = true;
+
+                        // Check which platforms are owned by the user
+                        // Platform is shared between consoles (PS4+PS5, XONE+XBSX)
+                        String ps4PlatformJson = ubiService.getGame(userInfos, PS4);
+                        String xonePlatformJson = ubiService.getGame(userInfos, XONE);
+                        String pcPlatformJson = ubiService.getGame(userInfos, PC);
+
+                        boolean ps4PlatformValid = ubiService.isValidResponse(ps4PlatformJson);
+                        boolean xonePlatformValid = ubiService.isValidResponse(xonePlatformJson);
+                        boolean pcPlatformValid = ubiService.isValidResponse(pcPlatformJson);
+
+                        if(ps4PlatformValid && xonePlatformValid && pcPlatformValid) {
+
+                            // Potential refactor : Create a Model "Game" with attributes "platform", "owned", "lastPlayedDate"
+                            JsonObject root = JsonParser.parseString(ps4PlatformJson).getAsJsonObject();
+                            boolean isPs4Owned = getViewerRoot(root).get("isOwned").getAsBoolean();
+                            JsonElement lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
+                            String ps4LastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+
+                            root = JsonParser.parseString(xonePlatformJson).getAsJsonObject();
+                            boolean isXoneOwned = getViewerRoot(root).get("isOwned").getAsBoolean();
+                            lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
+                            String xoneLastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+
+                            root = JsonParser.parseString(pcPlatformJson).getAsJsonObject();
+                            boolean isPcOwned = getViewerRoot(root).get("isOwned").getAsBoolean();
+                            lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
+                            String pcLastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+
+                            List<String> onwedPlatforms = new ArrayList<>();
+                            if(isPs4Owned) {
+                                onwedPlatforms.add(PS4);
+                            }
+                            if(isXoneOwned) {
+                                onwedPlatforms.add(XONE);
+                            }
+                            if(isPcOwned) {
+                                onwedPlatforms.add(PC);
+                            }
+                            userInfos.setOwnedPlatforms(onwedPlatforms);
+
+                            // Default platform is the last one that has been used
+                            userInfos.setLastSelectedPlatform(findLastPlatformPlayed(isPs4Owned, isXoneOwned, isPcOwned, ps4LastPlay, xoneLastPlay, pcLastPlay));
+
+                            SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
+                            isOk = true;
+                        } else {
+                            if(!ps4PlatformValid) {
+                                message = ubiService.getErrorMessage(ps4PlatformJson);
+                            } else if(!xonePlatformValid) {
+                                message = ubiService.getErrorMessage(xonePlatformJson);
+                            } else {
+                                message = ubiService.getErrorMessage(pcPlatformJson);
+                            }
+                        }
                     } else {
                         message = ubiService.getErrorMessage(profilesJson);
                     }
@@ -249,6 +316,42 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             } else {
                 return false;
             }
+        }
+
+        private JsonObject getViewerRoot(JsonObject root) {
+            return root.getAsJsonObject("data").getAsJsonObject("viewer").getAsJsonObject("game")
+                    .getAsJsonObject("node").getAsJsonObject("viewer").getAsJsonObject("meta");
+        }
+
+        private String findLastPlatformPlayed(boolean isPs4Owned, boolean isXoneOwned, boolean isPcOwned, String ps4LastPlay, String xoneLastPlay, String pcLastPlay) {
+            String platform = null;
+            Date ps4LastPlayDate = null;
+            Date xoneLastPlayDate = null;
+            Date pcLastPlayDate = null;
+            SimpleDateFormat formatter = new SimpleDateFormat(UBI_DATE_FORMAT, Locale.getDefault());
+
+            try {
+                if (isPs4Owned && null != ps4LastPlay) {
+                    ps4LastPlayDate = formatter.parse(ps4LastPlay.split(UBI_DATE_DELIMITER)[0]);
+                    platform = PS4;
+                }
+                if (isXoneOwned && null != xoneLastPlay) {
+                    xoneLastPlayDate = formatter.parse(xoneLastPlay.split(UBI_DATE_DELIMITER)[0]);
+                    if(null == platform || xoneLastPlayDate.after(ps4LastPlayDate)) {
+                        platform = XONE;
+                    }
+                }
+                if (isPcOwned && null != pcLastPlay) {
+                    pcLastPlayDate = formatter.parse(pcLastPlay.split(UBI_DATE_DELIMITER)[0]);
+                    if(null == platform || (platform == PS4 && pcLastPlayDate.after(ps4LastPlayDate)) ||
+                            (platform == XONE && pcLastPlayDate.after(xoneLastPlayDate))) {
+                        platform = PC;
+                    }
+                }
+            }catch (ParseException e) {
+                Log.e("ParseException", e.getMessage());
+            }
+            return platform;
         }
 
         @Override
