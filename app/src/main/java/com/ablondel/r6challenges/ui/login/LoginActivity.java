@@ -37,6 +37,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.auth.Authentication;
+import com.ablondel.r6challenges.model.games.Game;
 import com.ablondel.r6challenges.model.profile.ProfileList;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
@@ -51,7 +52,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -216,6 +217,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
+        public static final String ATTRIBUTE_IS_OWNED = "isOwned";
+        public static final String ATTRIBUTE_LAST_PLAYED_DATE = "lastPlayedDate";
         private final String mEmail;
         private final String mPassword;
 
@@ -248,43 +251,36 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         String ps4PlatformJson = ubiService.getGame(userInfos, PS4);
                         String xonePlatformJson = ubiService.getGame(userInfos, XONE);
                         String pcPlatformJson = ubiService.getGame(userInfos, PC);
-
                         boolean ps4PlatformValid = ubiService.isValidResponse(ps4PlatformJson);
                         boolean xonePlatformValid = ubiService.isValidResponse(xonePlatformJson);
                         boolean pcPlatformValid = ubiService.isValidResponse(pcPlatformJson);
 
                         if(ps4PlatformValid && xonePlatformValid && pcPlatformValid) {
 
-                            // Potential refactor : Create a Model "Game" with attributes "platform", "owned", "lastPlayedDate"
+                            Game ps4Game = new Game(), xoneGame = new Game(), pcGame = new Game();
+                            ps4Game.setPlatform(PS4);
+                            xoneGame.setPlatform(XONE);
+                            pcGame.setPlatform(PC);
                             JsonObject root = JsonParser.parseString(ps4PlatformJson).getAsJsonObject();
-                            boolean isPs4Owned = getViewerRoot(root).get("isOwned").getAsBoolean();
-                            JsonElement lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
-                            String ps4LastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+                            ps4Game.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
+                            JsonElement lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
+                            ps4Game.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
 
                             root = JsonParser.parseString(xonePlatformJson).getAsJsonObject();
-                            boolean isXoneOwned = getViewerRoot(root).get("isOwned").getAsBoolean();
-                            lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
-                            String xoneLastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+                            xoneGame.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
+                            lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
+                            xoneGame.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
 
                             root = JsonParser.parseString(pcPlatformJson).getAsJsonObject();
-                            boolean isPcOwned = getViewerRoot(root).get("isOwned").getAsBoolean();
-                            lastPlayedDate = getViewerRoot(root).get("lastPlayedDate");
-                            String pcLastPlay = lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString();
+                            pcGame.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
+                            lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
+                            pcGame.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
 
-                            List<String> onwedPlatforms = new ArrayList<>();
-                            if(isPs4Owned) {
-                                onwedPlatforms.add(PS4);
-                            }
-                            if(isXoneOwned) {
-                                onwedPlatforms.add(XONE);
-                            }
-                            if(isPcOwned) {
-                                onwedPlatforms.add(PC);
-                            }
-                            userInfos.setOwnedPlatforms(onwedPlatforms);
+                            List<Game> games = Arrays.asList(ps4Game, xoneGame, pcGame);
+                            userInfos.setGames(games);
 
                             // Default platform is the last one that has been used
-                            userInfos.setLastSelectedPlatform(findLastPlatformPlayed(isPs4Owned, isXoneOwned, isPcOwned, ps4LastPlay, xoneLastPlay, pcLastPlay));
+                            userInfos.setLastSelectedPlatform(findLastPlatformPlayed(games));
 
                             SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
                             isOk = true;
@@ -323,35 +319,33 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     .getAsJsonObject("node").getAsJsonObject("viewer").getAsJsonObject("meta");
         }
 
-        private String findLastPlatformPlayed(boolean isPs4Owned, boolean isXoneOwned, boolean isPcOwned, String ps4LastPlay, String xoneLastPlay, String pcLastPlay) {
+        private String findLastPlatformPlayed(List<Game> games) {
             String platform = null;
-            Date ps4LastPlayDate = null;
-            Date xoneLastPlayDate = null;
-            Date pcLastPlayDate = null;
             SimpleDateFormat formatter = new SimpleDateFormat(UBI_DATE_FORMAT, Locale.getDefault());
-
             try {
-                if (isPs4Owned && null != ps4LastPlay) {
-                    ps4LastPlayDate = formatter.parse(ps4LastPlay.split(UBI_DATE_DELIMITER)[0]);
-                    platform = PS4;
-                }
-                if (isXoneOwned && null != xoneLastPlay) {
-                    xoneLastPlayDate = formatter.parse(xoneLastPlay.split(UBI_DATE_DELIMITER)[0]);
-                    if(null == platform || xoneLastPlayDate.after(ps4LastPlayDate)) {
-                        platform = XONE;
+                for(Game game : games) {
+                    if(game.isOwned() && null != game.getLastPlayedDate()) {
+                        Date lastPlayedDate = formatter.parse(game.getLastPlayedDate().split(UBI_DATE_DELIMITER)[0]);
+                        if(platform == null || lastPlayedDate.after(formatter.parse(getGameByPlatform(games, platform).getLastPlayedDate().split(UBI_DATE_DELIMITER)[0]))) {
+                            platform = game.getPlatform();
+                        }
                     }
                 }
-                if (isPcOwned && null != pcLastPlay) {
-                    pcLastPlayDate = formatter.parse(pcLastPlay.split(UBI_DATE_DELIMITER)[0]);
-                    if(null == platform || (platform == PS4 && pcLastPlayDate.after(ps4LastPlayDate)) ||
-                            (platform == XONE && pcLastPlayDate.after(xoneLastPlayDate))) {
-                        platform = PC;
-                    }
-                }
-            }catch (ParseException e) {
+            } catch (NullPointerException | ParseException e) {
                 Log.e("ParseException", e.getMessage());
             }
             return platform;
+        }
+
+        private Game getGameByPlatform(List<Game> games, String platform) {
+            Game foundGame = null;
+            for(Game game : games) {
+                if(platform.equals(game.getPlatform())) {
+                    foundGame = game;
+                    break;
+                }
+            }
+            return foundGame;
         }
 
         @Override
