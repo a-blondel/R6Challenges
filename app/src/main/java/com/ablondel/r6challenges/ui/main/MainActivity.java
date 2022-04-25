@@ -66,22 +66,26 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
 
-            final List<String> arraySpinner = new ArrayList<String>();
-
+            final List<String> arraySpinner = new ArrayList<>();
+            int selectedIndex = 0, i = 0;
             for(Game game : userInfos.getGames()) {
                 if(game.isOwned()) {
                     String platform = GamePlatformEnum.getPlatformByKey(game.getPlatform()).getPlatform();
                     Profile platformProfile = userInfos.getProfileList().getProfileByPlatformType(platform);
                     arraySpinner.add(new StringBuilder().append(null == platformProfile ? "Unknown" : platformProfile.getNameOnPlatform())
                             .append(" (").append(platform).append(")").toString());
+                    if(game.getPlatform().equals(userInfos.getLastSelectedPlatform())) {
+                        selectedIndex = i;
+                    }
+                    i++;
                 }
             }
             Spinner spinner = findViewById(R.id.playerWithPlatformSpinner);
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, arraySpinner);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
-
+            spinner.setSelection(selectedIndex);
 
         } catch (GeneralSecurityException | IOException e) {
             Log.e("Could not read shared preferences", e.getMessage());
