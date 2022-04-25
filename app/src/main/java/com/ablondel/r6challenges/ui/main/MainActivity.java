@@ -16,13 +16,18 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.ablondel.r6challenges.App;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.challenge.Challenges;
+import com.ablondel.r6challenges.model.games.Game;
+import com.ablondel.r6challenges.model.games.GamePlatformEnum;
+import com.ablondel.r6challenges.model.profile.Profile;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.ablondel.r6challenges.ui.login.LoginActivity;
@@ -30,6 +35,8 @@ import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.ablondel.r6challenges.service.UbiService.R6_PS4_SPACEID;
 
@@ -58,6 +65,23 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
             }
+
+            final List<String> arraySpinner = new ArrayList<String>();
+
+            for(Game game : userInfos.getGames()) {
+                if(game.isOwned()) {
+                    String platform = GamePlatformEnum.getPlatformByKey(game.getPlatform()).getPlatform();
+                    Profile platformProfile = userInfos.getProfileList().getProfileByPlatformType(platform);
+                    arraySpinner.add(new StringBuilder().append(null == platformProfile ? "Unknown" : platformProfile.getNameOnPlatform())
+                            .append(" (").append(platform).append(")").toString());
+                }
+            }
+            Spinner spinner = findViewById(R.id.playerWithPlatformSpinner);
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                    android.R.layout.simple_spinner_item, arraySpinner);
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+
 
         } catch (GeneralSecurityException | IOException e) {
             Log.e("Could not read shared preferences", e.getMessage());
