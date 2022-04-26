@@ -6,10 +6,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,8 +36,6 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.ablondel.r6challenges.service.UbiService.R6_PS4_SPACEID;
-
 public class MainActivity extends AppCompatActivity {
 
     private UbiService ubiService;
@@ -64,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
             if (null == userInfos) {
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
+                finish();
+                return;
             }
 
             final List<String> arraySpinner = new ArrayList<>();
@@ -72,8 +70,8 @@ public class MainActivity extends AppCompatActivity {
                 if(game.isOwned()) {
                     String platform = GamePlatformEnum.getPlatformByKey(game.getPlatform()).getPlatform();
                     Profile platformProfile = userInfos.getProfileList().getProfileByPlatformType(platform);
-                    arraySpinner.add(new StringBuilder().append(null == platformProfile ? "Unknown" : platformProfile.getNameOnPlatform())
-                            .append(" (").append(platform).append(")").toString());
+                    arraySpinner.add((null == platformProfile ? "Unknown" : platformProfile.getNameOnPlatform()) +
+                            " (" + platform + ")");
                     if(game.getPlatform().equals(userInfos.getLastSelectedPlatform())) {
                         selectedIndex = i;
                     }
@@ -100,14 +98,15 @@ public class MainActivity extends AppCompatActivity {
             }
             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
             startActivity(intent);
+            finish();
         });
 
         ImageButton refreshButton = findViewById(R.id.refreshButton);
         refreshButton.setOnClickListener((v) -> {
-            showProgress(true);
-            refreshChallengesTask = new RefreshChallengesTask();
-            refreshChallengesTask.execute((Void) null);
+            refreshChallenges();
         });
+
+        refreshChallenges();
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -121,6 +120,12 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    private void refreshChallenges() {
+        showProgress(true);
+        refreshChallengesTask = new RefreshChallengesTask();
+        refreshChallengesTask.execute((Void) null);
+    }
+
     /**
      * Represents an asynchronous task used to update the challenges
      */
@@ -130,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
         protected Challenges doInBackground(Void... params) {
             Challenges data = null;
             String message = "Challenges updated!";
-            String challengesJson = ubiService.getChallenges(userInfos, R6_PS4_SPACEID);
+            String challengesJson = ubiService.getChallenges(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId());
             Log.d("Debug---challengesJson", challengesJson);
             if (ubiService.isValidResponse(challengesJson)) {
                 data = new Gson().fromJson(challengesJson, Challenges.class);
@@ -168,40 +173,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
-    /**
-     * Shows the progress UI and hides the login form.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mainContentView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mainContentView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mainContentView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
+        mainContentView.setVisibility(show ? View.GONE : View.VISIBLE);
+        mainContentView.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mainContentView.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+        });
 
-            progressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            progressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    progressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            progressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mainContentView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+        progressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        progressView.animate().setDuration(shortAnimTime).alpha(
+                show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                progressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 }
