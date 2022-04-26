@@ -56,7 +56,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         if(!challenge__1.isExpired && null != challenge__1.getEndDate()) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
             long endDate = formatter.parse(challenge__1.getEndDate().toString()).getTime();
-            long now = new Date().getTime() - (1000 * 60 * 60 * 24 * 14);
+            long now = new Date().getTime();
             long diff = endDate - now;
             if (diff > 0l) {
                 long diffDay = diff / (24 * 60 * 60 * 1000);
