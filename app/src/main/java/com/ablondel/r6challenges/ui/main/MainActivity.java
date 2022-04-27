@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.Spinner;
@@ -26,6 +27,7 @@ import com.ablondel.r6challenges.model.challenge.Challenges;
 import com.ablondel.r6challenges.model.games.Game;
 import com.ablondel.r6challenges.model.games.GamePlatformEnum;
 import com.ablondel.r6challenges.model.profile.Profile;
+import com.ablondel.r6challenges.model.util.SpinnerKeyValue;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.ablondel.r6challenges.ui.login.LoginActivity;
@@ -64,14 +66,18 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            final List<String> arraySpinner = new ArrayList<>();
+            final List<SpinnerKeyValue> arraySpinner = new ArrayList<>();
             int selectedIndex = 0, i = 0;
             for(Game game : userInfos.getGames()) {
                 if(game.isOwned()) {
                     String platform = GamePlatformEnum.getPlatformByKey(game.getPlatform()).getPlatform();
                     Profile platformProfile = userInfos.getProfileList().getProfileByPlatformType(platform);
-                    arraySpinner.add((null == platformProfile ? "Unknown" : platformProfile.getNameOnPlatform()) +
-                            " (" + platform + ")");
+                    arraySpinner.add(
+                            new SpinnerKeyValue(
+                                    game.getPlatform(),
+                                    null == platformProfile ? "Undefined" : platformProfile.getNameOnPlatform() + " (" + platform + ")"
+                            )
+                    );
                     if(game.getPlatform().equals(userInfos.getLastSelectedPlatform())) {
                         selectedIndex = i;
                     }
@@ -79,11 +85,33 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             Spinner spinner = findViewById(R.id.playerWithPlatformSpinner);
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+            ArrayAdapter<SpinnerKeyValue> adapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, arraySpinner);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
             spinner.setSelection(selectedIndex);
+            // Fired on startup, so the challenges will load automatically anyway
+            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                    SpinnerKeyValue spinnerKeyValue = (SpinnerKeyValue) parentView.getItemAtPosition(position);
+                    if(userInfos.getLastSelectedPlatform() != spinnerKeyValue.getKey()) {
+                        userInfos.setLastSelectedPlatform(spinnerKeyValue.getKey());
+                        try {
+                            SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
+                        } catch (GeneralSecurityException | IOException e) {
+                            Log.e("Could not write shared preferences", e.getMessage());
+                        }
+                    }
+                    refreshChallenges();
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parentView) {
+                    return;
+                }
+
+            });
 
         } catch (GeneralSecurityException | IOException e) {
             Log.e("Could not read shared preferences", e.getMessage());
@@ -105,8 +133,6 @@ public class MainActivity extends AppCompatActivity {
         refreshButton.setOnClickListener((v) -> {
             refreshChallenges();
         });
-
-        refreshChallenges();
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -152,9 +178,10 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(final Challenges data) {
             RecyclerView recyclerView = findViewById(R.id.mainContentRecyclerView);
             recyclerView.setLayoutManager(new LinearLayoutManager(App.getAppContext()));
-            adapter = new ChallengesRecyclerViewAdapter(App.getAppContext(), data.getData().getGame().getViewer().getMeta().getPeriodicChallenges().getChallenges());
-            recyclerView.setAdapter(adapter);
-
+            if(null != data) {
+                adapter = new ChallengesRecyclerViewAdapter(App.getAppContext(), data.getData().getGame().getViewer().getMeta().getPeriodicChallenges().getChallenges());
+                recyclerView.setAdapter(adapter);
+            }
             refreshChallengesTask = null;
             showProgress(false);
         }

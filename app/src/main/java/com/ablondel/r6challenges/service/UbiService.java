@@ -61,6 +61,7 @@ public class UbiService {
 
     // Error handling
     private static final String UBI_ERROR_CODE = "errorCode";
+    private static final String UBI_ERRORS = "errors";
     private static final String UBI_ERROR_BEGIN = "\"message\":\"";
     private static final String UBI_ERROR_END = "\",";
     private static final String UBI_EMPTY_RESPONSE = "Empty response";
@@ -169,12 +170,12 @@ public class UbiService {
     }
 
     public boolean isValidResponse(String response){
-        return StringUtils.isNotBlank(response) && !response.contains(UBI_ERROR_CODE) &&!response.contains(EXCEPTION_PATTERN);
+        return StringUtils.isNotBlank(response) && !response.contains(UBI_ERROR_CODE) &&!response.contains(EXCEPTION_PATTERN) &&!response.contains(UBI_ERRORS);
     }
 
     public String getErrorMessage(String response){
         String message;
-        if (response.contains(UBI_ERROR_CODE)) {
+        if (response.contains(UBI_ERROR_CODE) || response.contains(UBI_ERRORS)) {
             String errorMessageBegin = UBI_ERROR_BEGIN;
             String errorMessageEnd = UBI_ERROR_END;
             int pFrom = response.indexOf(errorMessageBegin) + errorMessageBegin.length();
