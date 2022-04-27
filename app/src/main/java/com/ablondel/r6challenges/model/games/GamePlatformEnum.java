@@ -2,8 +2,8 @@ package com.ablondel.r6challenges.model.games;
 
 public enum GamePlatformEnum {
     PS4("psn", "05bfb3f7-6c21-4c42-be1f-97a33fb5cf66"),
-    XONE("xbl", "5172a557-50b5-4665-b7db-e3f2e8c5041d"),
-    PC("uplay", "98a601e5-ca91-4440-b1c5-753f601a2c90");
+    XONE("xbl", "98a601e5-ca91-4440-b1c5-753f601a2c90"),
+    PC("uplay", "5172a557-50b5-4665-b7db-e3f2e8c5041d");
 
     private String platform;
     private String spaceId;
