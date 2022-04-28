@@ -163,12 +163,14 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         if(challenge__1.getViewer().getMeta().getIsCollectible() && !challenge__1.getViewer().getMeta().isRedeemed) {
             holder.challengeClaimButton.setVisibility(View.VISIBLE);
             holder.challengeClaimButton.setEnabled(true);
+            holder.challengeClaimButton.setBackgroundResource(R.drawable.round_shape_btn);
         } else {
             holder.challengeClaimButton.setVisibility(View.GONE);
         }
 
         holder.challengeClaimButton.setOnClickListener((v) -> {
             holder.challengeClaimButton.setEnabled(false);
+            holder.challengeClaimButton.setBackgroundResource(R.drawable.round_shape_btn_disabled);
             claimChallengeTask = new ClaimChallengeTask(this, position);
             claimChallengeTask.execute(challenge__1);
         });
@@ -199,7 +201,6 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             Challenge__1 challengeToClaim = (Challenge__1) params[0];
             String message = "Challenge claimed!";
             String claimChallengeJson = ubiService.claimChallenge(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId(), challengeToClaim.getChallengeId());
-
             if (ubiService.isValidResponse(claimChallengeJson)) {
                 data = new Gson().fromJson(JsonParser.parseString(claimChallengeJson).getAsJsonObject()
                         .getAsJsonObject("data").getAsJsonObject("collectPeriodicChallenge").getAsJsonObject("periodicChallenge"), Challenge__1.class);

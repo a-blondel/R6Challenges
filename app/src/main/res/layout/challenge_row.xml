@@ -74,6 +74,9 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:minHeight="8dip"
+            android:maxHeight="8dip"
+            android:progressDrawable="@drawable/custom_progressbar"
             android:id="@+id/challengeProgressionProgressBar" />
 
     </LinearLayout>
