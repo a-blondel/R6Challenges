@@ -65,12 +65,15 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
                 diff = diff - (diffHours * 60 * 60 * 1000);
                 long diffMinutes = diff / (60 * 1000);
 
+                holder.challengeTimeTextView.setVisibility(View.VISIBLE);
                 holder.challengeTimeTextView.setText(new StringBuilder()
                         .append(String.format("%01d", diffDay) + "d").append(" ")
                         .append(String.format("%02d", diffHours) + "h").append(" ")
                         .append(String.format("%02d", diffMinutes) + "min").append(" ")
                 );
             }
+        } else {
+            holder.challengeTimeTextView.setVisibility(View.GONE);
         }
 
         holder.challengeDescriptionTextView.setText(
@@ -82,6 +85,8 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         if(COMMUNITY.equals(challenge__1.getType())) {
             holder.challengeContributionTextView.setVisibility(View.VISIBLE);
             holder.challengeContributionTextView.setText("Contribution: " + challenge__1.getViewer().getMeta().getFormattedContribution());
+        } else {
+            holder.challengeContributionTextView.setVisibility(View.GONE);
         }
 
         holder.challengeProgressionTextView.setText(new StringBuilder()
