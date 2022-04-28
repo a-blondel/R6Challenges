@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     SpinnerKeyValue spinnerKeyValue = (SpinnerKeyValue) parentView.getItemAtPosition(position);
-                    if(userInfos.getLastSelectedPlatform() != spinnerKeyValue.getKey()) {
+                    if(!userInfos.getLastSelectedPlatform().equals(spinnerKeyValue.getKey())) {
                         userInfos.setLastSelectedPlatform(spinnerKeyValue.getKey());
                         try {
                             SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
@@ -108,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onNothingSelected(AdapterView<?> parentView) {
-                    return;
                 }
 
             });
@@ -130,9 +129,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         ImageButton refreshButton = findViewById(R.id.refreshButton);
-        refreshButton.setOnClickListener((v) -> {
-            refreshChallenges();
-        });
+        refreshButton.setOnClickListener((v) -> refreshChallenges());
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
@@ -152,9 +149,6 @@ public class MainActivity extends AppCompatActivity {
         refreshChallengesTask.execute((Void) null);
     }
 
-    /**
-     * Represents an asynchronous task used to update the challenges
-     */
     public class RefreshChallengesTask extends AsyncTask<Void, Void, Challenges> {
 
         @Override
@@ -162,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
             Challenges data = null;
             String message = "Challenges updated!";
             String challengesJson = ubiService.getChallenges(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId());
-            Log.d("Debug---challengesJson", challengesJson);
             if (ubiService.isValidResponse(challengesJson)) {
                 data = new Gson().fromJson(challengesJson, Challenges.class);
             } else {

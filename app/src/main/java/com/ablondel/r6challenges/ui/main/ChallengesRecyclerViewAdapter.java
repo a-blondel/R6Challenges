@@ -1,26 +1,41 @@
 package com.ablondel.r6challenges.ui.main;
 
 import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.ablondel.r6challenges.App;
 import com.ablondel.r6challenges.R;
+import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.challenge.Challenge__1;
 import com.ablondel.r6challenges.model.challenge.CurrencyPrizes__1;
 import com.ablondel.r6challenges.model.challenge.ItemPrizes__1;
 import com.ablondel.r6challenges.model.challenge.Meta__3;
 import com.ablondel.r6challenges.model.challenge.Node__2;
 import com.ablondel.r6challenges.model.challenge.Node__4;
+import com.ablondel.r6challenges.model.games.GamePlatformEnum;
+import com.ablondel.r6challenges.service.SharedPreferencesService;
+import com.ablondel.r6challenges.service.UbiService;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +47,10 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
     public static final String COMMUNITY = "COMMUNITY";
     private LayoutInflater mInflater;
     private List<Challenge__1> mData;
+    private ClaimChallengeTask claimChallengeTask = null;
+    private Handler handler;
+    private UbiService ubiService;
+    private UserInfos userInfos;
 
     ChallengesRecyclerViewAdapter(Context context, List<Challenge__1> data) {
         this.mInflater = LayoutInflater.from(context);
@@ -40,8 +59,26 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        ubiService = new UbiService();
+        try {
+            userInfos = new Gson().fromJson(SharedPreferencesService.getEncryptedSharedPreferences().getString("userInfos", null), UserInfos.class);
+        } catch (GeneralSecurityException | IOException e) {
+            Log.e("Could not read shared preferences", e.getMessage());
+        }
+
         View view = mInflater.inflate(R.layout.challenge_row, parent, false);
         return new ViewHolder(view);
+    }
+
+    void updateChallenge(Challenge__1 updatedChallenge, int position) {
+        for(Challenge__1 challenge : mData) {
+            if(updatedChallenge.getId().equals(challenge.getId())) {
+                challenge.getViewer().getMeta().setIsCollectible(updatedChallenge.getViewer().getMeta().getIsCollectible());
+                challenge.getViewer().getMeta().setIsRedeemed(updatedChallenge.getViewer().getMeta().getIsRedeemed());
+                break;
+            }
+        }
+        notifyItemChanged(position);
     }
 
     @SneakyThrows
@@ -125,8 +162,74 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
         if(challenge__1.getViewer().getMeta().getIsCollectible() && !challenge__1.getViewer().getMeta().isRedeemed) {
             holder.challengeClaimButton.setVisibility(View.VISIBLE);
+            holder.challengeClaimButton.setEnabled(true);
+        } else {
+            holder.challengeClaimButton.setVisibility(View.GONE);
         }
 
+        holder.challengeClaimButton.setOnClickListener((v) -> {
+            holder.challengeClaimButton.setEnabled(false);
+            claimChallengeTask = new ClaimChallengeTask(this, position);
+            claimChallengeTask.execute(challenge__1);
+        });
+
+        handler = new Handler(Looper.getMainLooper()) {
+            @Override
+            public void handleMessage(Message message) {
+                Toast.makeText(
+                        App.getAppContext(),
+                        (String) message.obj,
+                        Toast.LENGTH_LONG).show();
+            }
+        };
+    }
+
+    public class ClaimChallengeTask extends AsyncTask<Object, Void, Challenge__1> {
+        ChallengesRecyclerViewAdapter adapter;
+        int position;
+
+        public ClaimChallengeTask(ChallengesRecyclerViewAdapter adapter, int position) {
+            this.adapter = adapter;
+            this.position = position;
+        }
+
+        @Override
+        protected Challenge__1 doInBackground(Object... params) {
+            Challenge__1 data = null;
+            Challenge__1 challengeToClaim = (Challenge__1) params[0];
+            String message = "Challenge claimed!";
+            String claimChallengeJson = ubiService.claimChallenge(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId(), challengeToClaim.getChallengeId());
+
+            if (ubiService.isValidResponse(claimChallengeJson)) {
+                data = new Gson().fromJson(JsonParser.parseString(claimChallengeJson).getAsJsonObject()
+                        .getAsJsonObject("data").getAsJsonObject("collectPeriodicChallenge").getAsJsonObject("periodicChallenge"), Challenge__1.class);
+            } else {
+                message = ubiService.getErrorMessage(claimChallengeJson);
+            }
+            sendMessage(message);
+            Log.d("Result", message);
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(final Challenge__1 data) {
+            if(null != data) {
+                adapter.updateChallenge(data, position);
+            }
+            claimChallengeTask = null;
+        }
+
+        @Override
+        protected void onCancelled() {
+            claimChallengeTask = null;
+        }
+
+        private void sendMessage(String message) {
+            Message msg = Message.obtain();
+            msg.obj = message;
+            msg.setTarget(handler);
+            msg.sendToTarget();
+        }
     }
 
     @Override
@@ -158,6 +261,5 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             challengeClaimButton = itemView.findViewById(R.id.challengeClaimButton);
         }
     }
-
 
 }

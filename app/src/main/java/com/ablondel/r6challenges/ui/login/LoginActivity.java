@@ -1,11 +1,8 @@
 package com.ablondel.r6challenges.ui.login;
 
 import static com.ablondel.r6challenges.service.UbiService.CHARSET_UTF8;
-import static com.ablondel.r6challenges.service.UbiService.PC;
-import static com.ablondel.r6challenges.service.UbiService.PS4;
 import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_DELIMITER;
 import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_FORMAT;
-import static com.ablondel.r6challenges.service.UbiService.XONE;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -37,6 +34,7 @@ import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.auth.Authentication;
 import com.ablondel.r6challenges.model.games.Game;
+import com.ablondel.r6challenges.model.games.GamePlatformEnum;
 import com.ablondel.r6challenges.model.profile.ProfileList;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
@@ -199,29 +197,26 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 keyBytes = key.getBytes(CHARSET_UTF8);
                 String encodedKey = Base64.encodeToString(keyBytes, Base64.NO_WRAP);
                 String authenticationJson = ubiService.authenticate(encodedKey);
-                Log.d("Debug---authenticationJson", authenticationJson);
                 if(ubiService.isValidResponse(authenticationJson)) {
                     userInfos.setAuthentication(new Gson().fromJson(authenticationJson, Authentication.class));
                     String profilesJson = ubiService.getProfiles(userInfos);
-                    Log.d("Debug---profilesJson", profilesJson);
                     if(ubiService.isValidResponse(profilesJson)) {
                         userInfos.setProfileList(new Gson().fromJson(profilesJson, ProfileList.class));
 
                         // Check which platforms are owned by the user
                         // Platform is shared between consoles (PS4+PS5, XONE+XBSX)
-                        String ps4PlatformJson = ubiService.getGame(userInfos, PS4);
-                        String xonePlatformJson = ubiService.getGame(userInfos, XONE);
-                        String pcPlatformJson = ubiService.getGame(userInfos, PC);
+                        String ps4PlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.PS4.name());
+                        String xonePlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.XONE.name());
+                        String pcPlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.PC.name());
                         boolean ps4PlatformValid = ubiService.isValidResponse(ps4PlatformJson);
                         boolean xonePlatformValid = ubiService.isValidResponse(xonePlatformJson);
                         boolean pcPlatformValid = ubiService.isValidResponse(pcPlatformJson);
 
                         if(ps4PlatformValid && xonePlatformValid && pcPlatformValid) {
-
                             Game ps4Game = new Game(), xoneGame = new Game(), pcGame = new Game();
-                            ps4Game.setPlatform(PS4);
-                            xoneGame.setPlatform(XONE);
-                            pcGame.setPlatform(PC);
+                            ps4Game.setPlatform(GamePlatformEnum.PS4.name());
+                            xoneGame.setPlatform(GamePlatformEnum.XONE.name());
+                            pcGame.setPlatform(GamePlatformEnum.PC.name());
                             JsonObject root = JsonParser.parseString(ps4PlatformJson).getAsJsonObject();
                             ps4Game.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
                             JsonElement lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
