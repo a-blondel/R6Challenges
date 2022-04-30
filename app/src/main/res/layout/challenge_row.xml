@@ -23,7 +23,8 @@
         <TextView
             android:id="@+id/challengeTimeTextView"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textColor="#b3ffffff"/>
 
     </LinearLayout>
 
@@ -36,7 +37,8 @@
             android:id="@+id/challengeDescriptionTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textStyle="italic" />
+            android:textStyle="italic"
+            android:textColor="#b3ffffff" />
 
     </LinearLayout>
 
@@ -50,7 +52,8 @@
             android:id="@+id/challengeContributionTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:textColor="#b3ffffff" />
 
         <View
             android:layout_width="0dp"
@@ -60,7 +63,8 @@
         <TextView
             android:id="@+id/challengeProgressionTextView"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:textColor="#b3ffffff" />
 
     </LinearLayout>
 
@@ -91,7 +95,8 @@
             android:id="@+id/challengeRewardsTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="5dp" />
+            android:layout_marginEnd="5dp"
+            android:textColor="#b3ffffff" />
 
         <TextView
             android:id="@+id/challengeRewardsObtainedTextView"
@@ -116,7 +121,8 @@
             android:layout_marginTop="5dp"
             android:background="@drawable/round_shape_btn"
             android:text="@string/claim"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:textColor="#b3ffffff" />
 
     </LinearLayout>
 
