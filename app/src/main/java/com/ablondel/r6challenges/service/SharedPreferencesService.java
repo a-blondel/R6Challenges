@@ -14,14 +14,13 @@ public class SharedPreferencesService {
 
     public static SharedPreferences getEncryptedSharedPreferences() throws GeneralSecurityException, IOException {
         String masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC);
-        SharedPreferences sharedPreferences = EncryptedSharedPreferences.create(
+        return EncryptedSharedPreferences.create(
                 "secret_shared_prefs",
                 masterKeyAlias,
                 App.getAppContext(),
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         );
-        return sharedPreferences;
     }
 
 }

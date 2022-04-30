@@ -1,6 +1,5 @@
 package com.ablondel.r6challenges.ui.login;
 
-import static com.ablondel.r6challenges.service.UbiService.CHARSET_UTF8;
 import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_DELIMITER;
 import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_FORMAT;
 
@@ -18,13 +17,10 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,6 +42,7 @@ import com.google.gson.JsonParser;
 
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -74,26 +71,18 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         setSupportActionBar(toolbar);
         mEmailView = (EditText) findViewById(R.id.email);
         mPasswordView = (EditText) findViewById(R.id.password);
-        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
-                    return true;
-                }
-                return false;
+        mPasswordView.setOnEditorActionListener((textView, id, keyEvent) -> {
+            if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
+                attemptLogin();
+                return true;
             }
+            return false;
         });
 
         ubiService = new UbiService();
 
         Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
-        mEmailSignInButton.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                attemptLogin();
-            }
-        });
+        mEmailSignInButton.setOnClickListener(view -> attemptLogin());
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
@@ -119,10 +108,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
 
-        boolean empty = false;
-        if (TextUtils.isEmpty(password) || TextUtils.isEmpty(email)) {
-            empty = true;
-        }
+        boolean empty = TextUtils.isEmpty(password) || TextUtils.isEmpty(email);
         if (!empty) {
             showProgress(true);
             mAuthTask = new UserLoginTask(email, password);
@@ -194,7 +180,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             byte[] keyBytes;
             try {
                 UserInfos userInfos = new UserInfos();
-                keyBytes = key.getBytes(CHARSET_UTF8);
+                keyBytes = key.getBytes(StandardCharsets.UTF_8);
                 String encodedKey = Base64.encodeToString(keyBytes, Base64.NO_WRAP);
                 String authenticationJson = ubiService.authenticate(encodedKey);
                 if(ubiService.isValidResponse(authenticationJson)) {
@@ -261,11 +247,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             sendMessage(message);
             Log.d("Result :" , message);
 
-            if (isOk) {
-                return true;
-            } else {
-                return false;
-            }
+            return isOk;
         }
 
         private JsonObject getViewerRoot(JsonObject root) {
@@ -280,7 +262,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 for(Game game : games) {
                     if(game.isOwned() && null != game.getLastPlayedDate()) {
                         Date lastPlayedDate = formatter.parse(game.getLastPlayedDate().split(UBI_DATE_DELIMITER)[0]);
-                        if(platform == null || lastPlayedDate.after(formatter.parse(getGameByPlatform(games, platform).getLastPlayedDate().split(UBI_DATE_DELIMITER)[0]))) {
+                        if(platform == null || (lastPlayedDate != null && lastPlayedDate.after(formatter.parse(getGameByPlatform(games, platform).getLastPlayedDate().split(UBI_DATE_DELIMITER)[0])))) {
                             platform = game.getPlatform();
                         }
                     }

@@ -40,6 +40,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import lombok.SneakyThrows;
 
@@ -57,8 +58,9 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         this.mData = data;
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         ubiService = new UbiService();
         try {
             userInfos = new Gson().fromJson(SharedPreferencesService.getEncryptedSharedPreferences().getString("userInfos", null), UserInfos.class);
@@ -92,10 +94,10 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
         if(!challenge__1.isExpired && null != challenge__1.getEndDate()) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
-            long endDate = formatter.parse(challenge__1.getEndDate().toString()).getTime();
+            long endDate = Objects.requireNonNull(formatter.parse(challenge__1.getEndDate().toString())).getTime();
             long now = new Date().getTime();
             long diff = endDate - now;
-            if (diff > 0l) {
+            if (diff > 0L) {
                 long diffDay = diff / (24 * 60 * 60 * 1000);
                 diff = diff - (diffDay * 24 * 60 * 60 * 1000);
                 long diffHours = diff / (60 * 60 * 1000);
@@ -103,10 +105,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
                 long diffMinutes = diff / (60 * 1000);
 
                 holder.challengeTimeTextView.setVisibility(View.VISIBLE);
-                holder.challengeTimeTextView.setText(new StringBuilder()
-                        .append(String.format("%01d", diffDay) + "d").append(" ")
-                        .append(String.format("%02d", diffHours) + "h").append(" ")
-                        .append(String.format("%02d", diffMinutes) + "min").append(" ")
+                holder.challengeTimeTextView.setText(new StringBuilder().append(String.format(Locale.getDefault(), "%01d", diffDay)).append("d").append(" ").append(String.format(Locale.getDefault(), "%02d", diffHours)).append("h").append(" ").append(String.format(Locale.getDefault(), "%02d", diffMinutes)).append("min").append(" ")
                 );
             }
         } else {
@@ -121,7 +120,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
 
         if(COMMUNITY.equals(challenge__1.getType())) {
             holder.challengeContributionTextView.setVisibility(View.VISIBLE);
-            holder.challengeContributionTextView.setText("Contribution: " + challenge__1.getViewer().getMeta().getFormattedContribution());
+            holder.challengeContributionTextView.setText(String.format(App.getAppContext().getString(R.string.contribution), challenge__1.getViewer().getMeta().getFormattedContribution()));
         } else {
             holder.challengeContributionTextView.setVisibility(View.GONE);
         }
@@ -238,7 +237,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         return mData.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView challengeNameTextView;
         TextView challengeTimeTextView;
         TextView challengeDescriptionTextView;

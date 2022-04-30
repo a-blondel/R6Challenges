@@ -8,6 +8,7 @@
     <string name="playerWithPlatform">"Player (platform)"</string>
     <string name="claim">Claim</string>
     <string name="obtained">\u2713 Obtained</string>
+    <string name="contribution">Contribution: %1$s</string>
 
     <!--Login Activity-->
     <string name="title_activity_login">Login</string>
