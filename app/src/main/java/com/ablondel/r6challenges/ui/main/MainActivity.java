@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             userInfos = new Gson().fromJson(SharedPreferencesService.getEncryptedSharedPreferences().getString("userInfos", null), UserInfos.class);
 
-            if (null == userInfos) {
+            if (null == userInfos || null == userInfos.getAuthentication().getRememberMeTicket()) {
                 Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                 startActivity(intent);
                 finish();
