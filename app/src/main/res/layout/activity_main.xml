@@ -32,7 +32,8 @@
                 android:contentDescription="@string/logout"
                 android:layout_margin="5dp"
                 android:background="#FF3131"
-                android:src="@android:drawable/ic_lock_power_off" />
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="#FFFFFF" />
 
             <Spinner
                 android:id="@+id/playerWithPlatformSpinner"
