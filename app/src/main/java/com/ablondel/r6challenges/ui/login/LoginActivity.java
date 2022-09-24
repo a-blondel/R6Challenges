@@ -245,7 +245,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 message = e.getMessage();
             }
             sendMessage(message);
-            Log.d("Result :" , message);
+            Log.d("Result" , message);
 
             return isOk;
         }

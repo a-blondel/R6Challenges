@@ -28,6 +28,7 @@ import com.ablondel.r6challenges.model.games.Game;
 import com.ablondel.r6challenges.model.games.GamePlatformEnum;
 import com.ablondel.r6challenges.model.profile.Profile;
 import com.ablondel.r6challenges.model.util.SpinnerKeyValue;
+import com.ablondel.r6challenges.service.LogService;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.ablondel.r6challenges.ui.login.LoginActivity;
@@ -156,13 +157,14 @@ public class MainActivity extends AppCompatActivity {
             Challenges data = null;
             String message = "Challenges updated!";
             String challengesJson = ubiService.getChallenges(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId());
+            LogService.displayLongLog("ChallengesJson", challengesJson);
             if (ubiService.isValidResponse(challengesJson)) {
                 data = new Gson().fromJson(challengesJson, Challenges.class);
             } else {
                 message = ubiService.getErrorMessage(challengesJson);
             }
             sendMessage(message);
-            Log.d("Result :", message);
+            Log.d("Result", message);
 
             return data;
         }

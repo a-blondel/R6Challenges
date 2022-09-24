@@ -27,6 +27,7 @@ import com.ablondel.r6challenges.model.challenge.Meta__3;
 import com.ablondel.r6challenges.model.challenge.Node__2;
 import com.ablondel.r6challenges.model.challenge.Node__4;
 import com.ablondel.r6challenges.model.games.GamePlatformEnum;
+import com.ablondel.r6challenges.service.LogService;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.google.gson.Gson;
@@ -200,6 +201,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             Challenge__1 challengeToClaim = (Challenge__1) params[0];
             String message = "Challenge claimed!";
             String claimChallengeJson = ubiService.claimChallenge(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId(), challengeToClaim.getChallengeId());
+            LogService.displayLongLog("claimChallengeJson", claimChallengeJson);
             if (ubiService.isValidResponse(claimChallengeJson)) {
                 data = new Gson().fromJson(JsonParser.parseString(claimChallengeJson).getAsJsonObject()
                         .getAsJsonObject("data").getAsJsonObject("collectPeriodicChallenge").getAsJsonObject("periodicChallenge"), Challenge__1.class);
