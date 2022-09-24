@@ -14,7 +14,6 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class UserInfos {
     private Authentication authentication;
     private ProfileList profileList;

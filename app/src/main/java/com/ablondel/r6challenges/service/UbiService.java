@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -42,7 +41,6 @@ public class UbiService {
     // Headers values
     public static final String APP_ID = "39baebad-39e5-4552-8c25-2c9b919064e2";
     private static final String CONTENT_TYPE_JSON = "application/json";
-    public static final String CHARSET_UTF8 = "UTF-8";
     private static final String AUTHORIZATION_BASIC = "Basic ";
     private static final String UBI_TOKEN_PREFIX = "Ubi_v1 t=";
     private static final String UBI_REFRESH_PREFIX = "rm_v1 t=";
@@ -115,12 +113,9 @@ public class UbiService {
                 urlConnection.setRequestProperty(HEADER_UBI_SESSIONID, sessionId);
             }
             if (method.equals(POST_METHOD)) {
-                OutputStream os = urlConnection.getOutputStream();
-                OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-                osw.write(body);
-                osw.flush();
-                osw.close();
-                os.close();
+                try (OutputStreamWriter osw = new OutputStreamWriter(urlConnection.getOutputStream(), StandardCharsets.UTF_8)) {
+                    osw.write(body);
+                }
             }
             urlConnection.connect();
             response = getResponse(urlConnection);
@@ -138,7 +133,7 @@ public class UbiService {
         try {
             SimpleDateFormat formatter = new SimpleDateFormat(UBI_DATE_FORMAT, Locale.getDefault());
             Date expiration = formatter.parse(userInfos.getAuthentication().getExpiration().split(UBI_DATE_DELIMITER)[0]);
-            if (System.currentTimeMillis() > expiration.getTime() - (1000 * 60 * 5)) {
+            if (null == expiration || System.currentTimeMillis() > expiration.getTime() - (1000 * 60 * 5)) {
 
                 String updatedAuthJson = updateRefreshToken(userInfos);
                 Log.d("Refresh token", updatedAuthJson);
@@ -177,9 +172,8 @@ public class UbiService {
         String message;
         if (response.contains(UBI_ERROR_CODE) || response.contains(UBI_ERRORS)) {
             String errorMessageBegin = UBI_ERROR_BEGIN;
-            String errorMessageEnd = UBI_ERROR_END;
             int pFrom = response.indexOf(errorMessageBegin) + errorMessageBegin.length();
-            int pTo = response.indexOf(errorMessageEnd, pFrom);
+            int pTo = response.indexOf(UBI_ERROR_END, pFrom);
 
             message = response.substring(pFrom, pTo);
         } else if(response.contains(EXCEPTION_PATTERN)) {

@@ -1,5 +1,7 @@
 package com.ablondel.r6challenges.model.util;
 
+import androidx.annotation.NonNull;
+
 import lombok.Data;
 
 @Data
@@ -12,6 +14,7 @@ public class SpinnerKeyValue {
         this.value = value;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return value;
