@@ -172,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(final Challenges data) {
             RecyclerView recyclerView = findViewById(R.id.mainContentRecyclerView);
-            recyclerView.setHasFixedSize(true);
             recyclerView.setLayoutManager(new LinearLayoutManager(App.getAppContext()));
             if(null != data) {
                 adapter = new ChallengesRecyclerViewAdapter(App.getAppContext(), data.getData().getGame().getViewer().getMeta().getPeriodicChallenges().getChallenges());
