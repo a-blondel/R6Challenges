@@ -24,7 +24,6 @@ import com.ablondel.r6challenges.App;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.challenge.Challenges;
-import com.ablondel.r6challenges.model.games.Game;
 import com.ablondel.r6challenges.model.games.GamePlatformEnum;
 import com.ablondel.r6challenges.model.profile.Profile;
 import com.ablondel.r6challenges.model.util.SpinnerKeyValue;
@@ -68,41 +67,39 @@ public class MainActivity extends AppCompatActivity {
             }
 
             final List<SpinnerKeyValue> arraySpinner = new ArrayList<>();
-            int selectedIndex = 0, i = 0;
-            for(Game game : userInfos.getGames()) {
-                if(game.isOwned()) {
-                    String platform = GamePlatformEnum.getPlatformByKey(game.getPlatform()).getPlatform();
-                    Profile platformProfile = userInfos.getProfileList().getProfileByPlatformType(platform);
-                    arraySpinner.add(
-                            new SpinnerKeyValue(
-                                    game.getPlatform(),
-                                    null == platformProfile ? "Undefined" : platformProfile.getNameOnPlatform() + " (" + platform + ")"
-                            )
-                    );
-                    if(game.getPlatform().equals(userInfos.getLastSelectedPlatform())) {
-                        selectedIndex = i;
-                    }
-                    i++;
+
+            int selectedProfileIndex = 0;
+            int i = 0;
+            String lastSelectedPlatform = userInfos.getLastSelectedPlatform();
+            for(Profile profile : userInfos.getProfileList().getProfiles()) {
+                arraySpinner.add(
+                        new SpinnerKeyValue(
+                                profile.getPlatformType(),
+                                profile.getNameOnPlatform() + " (" + profile.getPlatformType() + ")"
+                        )
+                );
+                if(null != lastSelectedPlatform && lastSelectedPlatform.equals(profile.getPlatformType())) {
+                    selectedProfileIndex = i;
                 }
+                i++;
             }
+
             Spinner spinner = findViewById(R.id.playerWithPlatformSpinner);
             ArrayAdapter<SpinnerKeyValue> adapter = new ArrayAdapter<>(this,
                     android.R.layout.simple_spinner_item, arraySpinner);
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             spinner.setAdapter(adapter);
-            spinner.setSelection(selectedIndex);
+            spinner.setSelection(selectedProfileIndex);
             // Fired on startup, so the challenges will load automatically anyway
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
                     SpinnerKeyValue spinnerKeyValue = (SpinnerKeyValue) parentView.getItemAtPosition(position);
-                    if(!userInfos.getLastSelectedPlatform().equals(spinnerKeyValue.getKey())) {
-                        userInfos.setLastSelectedPlatform(spinnerKeyValue.getKey());
-                        try {
-                            SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
-                        } catch (GeneralSecurityException | IOException e) {
-                            Log.e("Could not write shared preferences", e.getMessage());
-                        }
+                    userInfos.setLastSelectedPlatform(spinnerKeyValue.getKey());
+                    try {
+                        SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
+                    } catch (GeneralSecurityException | IOException e) {
+                        Log.e("Could not write shared preferences", e.getMessage());
                     }
                     refreshChallenges();
                 }
@@ -156,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
         protected Challenges doInBackground(Void... params) {
             Challenges data = null;
             String message = "Challenges updated!";
-            String challengesJson = ubiService.getChallenges(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId());
+            String challengesJson = ubiService.getChallenges(userInfos, GamePlatformEnum.CROSSPLAY.getSpaceId());
             LogService.displayLongLog("ChallengesJson", challengesJson);
             if (ubiService.isValidResponse(challengesJson)) {
                 data = new Gson().fromJson(challengesJson, Challenges.class);
