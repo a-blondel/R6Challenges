@@ -11,15 +11,4 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ProfileList {
     private List<Profile> profiles;
-
-    public Profile getProfileByPlatformType(String platformType) {
-        Profile profileFound = null;
-        for(Profile profile : profiles) {
-            if(profile.getPlatformType().equals(platformType)) {
-                profileFound = profile;
-                break;
-            }
-        }
-        return profileFound;
-    }
 }

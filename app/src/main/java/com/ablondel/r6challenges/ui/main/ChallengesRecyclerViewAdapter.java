@@ -200,7 +200,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             Challenge__1 data = null;
             Challenge__1 challengeToClaim = (Challenge__1) params[0];
             String message = "Challenge claimed!";
-            String claimChallengeJson = ubiService.claimChallenge(userInfos, GamePlatformEnum.getPlatformByKey(userInfos.getLastSelectedPlatform()).getSpaceId(), challengeToClaim.getChallengeId());
+            String claimChallengeJson = ubiService.claimChallenge(userInfos, GamePlatformEnum.CROSSPLAY.getSpaceId(), challengeToClaim.getChallengeId());
             LogService.displayLongLog("claimChallengeJson", claimChallengeJson);
             if (ubiService.isValidResponse(claimChallengeJson)) {
                 data = new Gson().fromJson(JsonParser.parseString(claimChallengeJson).getAsJsonObject()

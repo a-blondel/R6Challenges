@@ -1,8 +1,5 @@
 package com.ablondel.r6challenges.ui.login;
 
-import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_DELIMITER;
-import static com.ablondel.r6challenges.service.UbiService.UBI_DATE_FORMAT;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -29,27 +26,16 @@ import androidx.appcompat.widget.Toolbar;
 import com.ablondel.r6challenges.R;
 import com.ablondel.r6challenges.model.UserInfos;
 import com.ablondel.r6challenges.model.auth.Authentication;
-import com.ablondel.r6challenges.model.games.Game;
-import com.ablondel.r6challenges.model.games.GamePlatformEnum;
 import com.ablondel.r6challenges.model.profile.ProfileList;
 import com.ablondel.r6challenges.service.SharedPreferencesService;
 import com.ablondel.r6challenges.service.UbiService;
 import com.ablondel.r6challenges.ui.main.MainActivity;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
@@ -161,9 +147,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * the user.
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        public static final String ATTRIBUTE_IS_OWNED = "isOwned";
-        public static final String ATTRIBUTE_LAST_PLAYED_DATE = "lastPlayedDate";
         private final String mEmail;
         private final String mPassword;
 
@@ -188,53 +171,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                     String profilesJson = ubiService.getProfiles(userInfos);
                     if(ubiService.isValidResponse(profilesJson)) {
                         userInfos.setProfileList(new Gson().fromJson(profilesJson, ProfileList.class));
-
-                        // Check which platforms are owned by the user
-                        // Platform is shared between consoles (PS4+PS5, XONE+XBSX)
-                        String ps4PlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.PS4.name());
-                        String xonePlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.XONE.name());
-                        String pcPlatformJson = ubiService.getGame(userInfos, GamePlatformEnum.PC.name());
-                        boolean ps4PlatformValid = ubiService.isValidResponse(ps4PlatformJson);
-                        boolean xonePlatformValid = ubiService.isValidResponse(xonePlatformJson);
-                        boolean pcPlatformValid = ubiService.isValidResponse(pcPlatformJson);
-
-                        if(ps4PlatformValid && xonePlatformValid && pcPlatformValid) {
-                            Game ps4Game = new Game(), xoneGame = new Game(), pcGame = new Game();
-                            ps4Game.setPlatform(GamePlatformEnum.PS4.name());
-                            xoneGame.setPlatform(GamePlatformEnum.XONE.name());
-                            pcGame.setPlatform(GamePlatformEnum.PC.name());
-                            JsonObject root = JsonParser.parseString(ps4PlatformJson).getAsJsonObject();
-                            ps4Game.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
-                            JsonElement lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
-                            ps4Game.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
-
-                            root = JsonParser.parseString(xonePlatformJson).getAsJsonObject();
-                            xoneGame.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
-                            lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
-                            xoneGame.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
-
-                            root = JsonParser.parseString(pcPlatformJson).getAsJsonObject();
-                            pcGame.setOwned(getViewerRoot(root).get(ATTRIBUTE_IS_OWNED).getAsBoolean());
-                            lastPlayedDate = getViewerRoot(root).get(ATTRIBUTE_LAST_PLAYED_DATE);
-                            pcGame.setLastPlayedDate(lastPlayedDate.isJsonNull() ? null : lastPlayedDate.getAsString());
-
-                            List<Game> games = Arrays.asList(ps4Game, xoneGame, pcGame);
-                            userInfos.setGames(games);
-
-                            // Default platform is the last one that has been used
-                            userInfos.setLastSelectedPlatform(findLastPlatformPlayed(games));
-
-                            SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
-                            isOk = true;
-                        } else {
-                            if(!ps4PlatformValid) {
-                                message = ubiService.getErrorMessage(ps4PlatformJson);
-                            } else if(!xonePlatformValid) {
-                                message = ubiService.getErrorMessage(xonePlatformJson);
-                            } else {
-                                message = ubiService.getErrorMessage(pcPlatformJson);
-                            }
-                        }
+                        SharedPreferencesService.getEncryptedSharedPreferences().edit().putString("userInfos",new Gson().toJson(userInfos)).apply();
+                        isOk = true;
                     } else {
                         message = ubiService.getErrorMessage(profilesJson);
                     }
@@ -248,40 +186,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             Log.d("Result" , message);
 
             return isOk;
-        }
-
-        private JsonObject getViewerRoot(JsonObject root) {
-            return root.getAsJsonObject("data").getAsJsonObject("viewer").getAsJsonObject("game")
-                    .getAsJsonObject("node").getAsJsonObject("viewer").getAsJsonObject("meta");
-        }
-
-        private String findLastPlatformPlayed(List<Game> games) {
-            String platform = null;
-            SimpleDateFormat formatter = new SimpleDateFormat(UBI_DATE_FORMAT, Locale.getDefault());
-            try {
-                for(Game game : games) {
-                    if(game.isOwned() && null != game.getLastPlayedDate()) {
-                        Date lastPlayedDate = formatter.parse(game.getLastPlayedDate().split(UBI_DATE_DELIMITER)[0]);
-                        if(platform == null || (lastPlayedDate != null && lastPlayedDate.after(formatter.parse(getGameByPlatform(games, platform).getLastPlayedDate().split(UBI_DATE_DELIMITER)[0])))) {
-                            platform = game.getPlatform();
-                        }
-                    }
-                }
-            } catch (NullPointerException | ParseException e) {
-                Log.e("ParseException", e.getMessage());
-            }
-            return platform;
-        }
-
-        private Game getGameByPlatform(List<Game> games, String platform) {
-            Game foundGame = null;
-            for(Game game : games) {
-                if(platform.equals(game.getPlatform())) {
-                    foundGame = game;
-                    break;
-                }
-            }
-            return foundGame;
         }
 
         @Override
