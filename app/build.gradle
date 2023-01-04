@@ -28,6 +28,7 @@ android {
     buildFeatures {
         viewBinding true
     }
+    namespace 'com.ablondel.r6challenges'
 }
 
 dependencies {
