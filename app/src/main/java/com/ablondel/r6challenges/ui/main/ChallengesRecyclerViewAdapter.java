@@ -127,7 +127,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         }
 
         holder.challengeProgressionTextView.setText(new StringBuilder()
-                .append(viewerMeta.getProgress())
+                .append(viewerMeta.getFormattedProgress())
                 .append("/")
                 .append(thresholdsNode.getValue())
         );
