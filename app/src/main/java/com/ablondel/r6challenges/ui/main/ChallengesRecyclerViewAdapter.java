@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +48,9 @@ import lombok.SneakyThrows;
 
 public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<ChallengesRecyclerViewAdapter.ViewHolder> {
     public static final String COMMUNITY = "COMMUNITY";
+    private static final String XP = "XP";
+    private static final String SPACE = " ";
+    private static final String SEPARATOR = " - ";
     private LayoutInflater mInflater;
     private List<Challenge__1> mData;
     private ClaimChallengeTask claimChallengeTask = null;
@@ -78,6 +82,10 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
             if(updatedChallenge.getId().equals(challenge.getId())) {
                 challenge.getViewer().getMeta().setIsCollectible(updatedChallenge.getViewer().getMeta().getIsCollectible());
                 challenge.getViewer().getMeta().setIsRedeemed(updatedChallenge.getViewer().getMeta().getIsRedeemed());
+                for(int i = 0; i < challenge.getThresholds().getTotalCount(); i++) {
+                    Node__2 node = challenge.getThresholds().getNodes().get(i);
+                    node.getViewer().getMeta().setIsCollected(updatedChallenge.getThresholds().getNodes().get(i).getViewer().getMeta().getIsCollected());
+                }
                 break;
             }
         }
@@ -88,7 +96,9 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Challenge__1 challenge__1 = mData.get(position);
-        Node__2 thresholdsNode = challenge__1.getThresholds().getNodes().get(0);
+        List<Node__2> challengeNodes = challenge__1.getThresholds().getNodes();
+        Integer subChallengesCount = challenge__1.getThresholds().getTotalCount();
+        Node__2 lastSubChallenge = challengeNodes.get(subChallengesCount - 1);
         Meta__3 viewerMeta = challenge__1.getViewer().getMeta();
 
         holder.challengeNameTextView.setText(challenge__1.getName());
@@ -117,7 +127,7 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
                 StringUtils.replace(
                         challenge__1.getDescription(),
                         "{threshold}",
-                        thresholdsNode.getFormattedCumulatedValue()));
+                        lastSubChallenge.getFormattedCumulatedValue()));
 
         if(COMMUNITY.equals(challenge__1.getType())) {
             holder.challengeContributionTextView.setVisibility(View.VISIBLE);
@@ -129,34 +139,64 @@ public class ChallengesRecyclerViewAdapter extends RecyclerView.Adapter<Challeng
         holder.challengeProgressionTextView.setText(new StringBuilder()
                 .append(viewerMeta.getProgress())
                 .append("/")
-                .append(thresholdsNode.getValue())
+                .append(lastSubChallenge.getCumulatedValue())
         );
         holder.challengeProgressionProgressBar.setProgress(viewerMeta.getProgressPercentage().intValue());
         holder.challengeProgressionProgressBar.setMax(100);
 
-        CurrencyPrizes__1 prizes__1 = challenge__1.getThresholds().getNodes().get(0).getCurrencyPrizes();
-        ItemPrizes__1 itemPrizes__1 = challenge__1.getThresholds().getNodes().get(0).getItemPrizes();
-        if(0 != prizes__1.getEdges().size()) {
-            String rewardType = prizes__1.getEdges().get(0).getNode().getName();
-            Integer rewardValue = prizes__1.getEdges().get(0).getMeta().getValue();
-            holder.challengeRewardsTextView.setText(new StringBuilder()
-                    .append(rewardValue).append(" ").append(rewardType)
-                    .append(" - ")
-                    .append(challenge__1.getXpPrize()).append(" ").append("XP"));
-        } else if (itemPrizes__1.getNodes().size() > 0) {
-            int i = 0;
-            StringBuilder prizesBuilder = new StringBuilder();
-            for(Node__4 node__4 : itemPrizes__1.getNodes()) {
-                if(i != 0) {
-                    prizesBuilder.append(" - ");
-                }
-                prizesBuilder.append(node__4.getName());
-                i++;
+        StringBuilder prizesBuilder = new StringBuilder();
+        int nodeIndex = 0;
+        for (Node__2 node: challengeNodes) {
+            if(nodeIndex != 0) {
+                prizesBuilder.append("<br/>");
             }
-            holder.challengeRewardsTextView.setText(prizesBuilder.toString());
-        }
 
-        if(challenge__1.getViewer().getMeta().getIsCompleted() && challenge__1.getViewer().getMeta().isRedeemed) {
+            CurrencyPrizes__1 prizes__1 = node.getCurrencyPrizes();
+            ItemPrizes__1 itemPrizes__1 = node.getItemPrizes();
+
+            /**
+             * Multi-rewards challenges don't have Edges, whereas mono-reward challenges have 1
+             * Multi-rewards challenges have multiple Nodes
+             */
+            if(1 == prizes__1.getEdges().size()) {
+                String rewardType = prizes__1.getEdges().get(0).getNode().getName();
+                Integer rewardValue = prizes__1.getEdges().get(0).getMeta().getValue();
+                prizesBuilder.append(rewardValue).append(SPACE).append(rewardType)
+                        .append(SEPARATOR)
+                        .append(challenge__1.getXpPrize()).append(SPACE).append(XP);
+            } else if (itemPrizes__1.getNodes().size() > 0) {
+                /**
+                 * Displays multi-rewards challenges steps goals and claimed or not
+                 * Community challenge goal is redundant
+                 */
+                if (!COMMUNITY.equalsIgnoreCase(challenge__1.getType())) {
+                    prizesBuilder
+                            .append("Goal: ")
+                            .append(node.getCumulatedValue());
+                    if (node.getViewer().getMeta().getIsCollected()) {
+                        prizesBuilder
+                                .append(SPACE)
+                                .append("<b><font color=\"#50C878\">&#x2713; Obtained</font></b>");
+                    }
+                    prizesBuilder.append("<br/>");
+                }
+
+                int subNodeIndex = 0;
+                for(Node__4 node__4 : itemPrizes__1.getNodes()) {
+                    if(subNodeIndex != 0) {
+                        prizesBuilder.append(SEPARATOR);
+                    }
+                    prizesBuilder.append(node__4.getName());
+                    subNodeIndex++;
+                }
+                prizesBuilder.append(SEPARATOR)
+                        .append(node.getXpPrize()).append(SPACE).append(XP);
+            }
+            nodeIndex++;
+        }
+        holder.challengeRewardsTextView.setText(Html.fromHtml(prizesBuilder.toString()));
+
+        if(challenge__1.getViewer().getMeta().getIsCompleted() && challenge__1.getViewer().getMeta().isRedeemed && subChallengesCount == 1) {
             holder.challengeRewardsObtainedTextView.setVisibility(View.VISIBLE);
         }
 
