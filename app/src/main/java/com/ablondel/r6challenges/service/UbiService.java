@@ -39,7 +39,7 @@ public class UbiService {
     private static final String HEADER_AUTHORIZATION = "Authorization";
 
     // Headers values
-    public static final String APP_ID = "39baebad-39e5-4552-8c25-2c9b919064e2";
+    public static final String APP_ID = "314d4fef-e568-454a-ae06-43e3bece12a6";
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final String AUTHORIZATION_BASIC = "Basic ";
     private static final String UBI_TOKEN_PREFIX = "Ubi_v1 t=";
